@@ -1,0 +1,7 @@
+{
+  "source" : "git",
+  "details" : {
+    "url" : "https://github.com/bitoholic/coffee.app.git",
+    "subpath" : "iosApp"
+  }
+}
