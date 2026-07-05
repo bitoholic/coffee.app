@@ -34,13 +34,28 @@
 
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
 
+**Mobile Assumptions**: [target OS/version, device assumptions, navigation model,
+theme behavior, local storage choice, or NEEDS CLARIFICATION]
+
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Focused Brewing Memory**: Feature directly supports remembering coffee bean
+  brewing settings; user value and acceptance criteria are explicit.
+- **Local-First Simplicity**: No backend, accounts, cloud sync, payments,
+  social features, analytics, or notifications unless explicitly specified and
+  justified as a complexity violation.
+- **Test-First Development**: Failing tests are planned before implementation,
+  especially for data, state, validation, persistence, and important mobile
+  flows.
+- **User-Safe Data Changes**: Destructive or overwriting actions include
+  confirmation, undo, or an equivalent recovery pattern.
+- **Beginner-Friendly Mobile Architecture**: Mobile assumptions, theme behavior,
+  storage choice, dependencies, and local run/test commands are documented in
+  clear language.
 
 ## Project Structure
 

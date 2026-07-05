@@ -93,6 +93,19 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+### Constitution Alignment *(mandatory)*
+
+- **Brewing-memory value**: [Explain how this feature helps the user remember
+  coffee bean brewing settings]
+- **Local-first scope**: [Confirm no backend/accounts/cloud/etc., or mark the
+  explicit exception and reason]
+- **User-safe data changes**: [List destructive/overwriting actions and their
+  confirmation/undo/recovery behavior]
+- **Theme behavior**: [Document system theme default plus light/dark support if
+  this feature touches UI]
+- **Mobile assumptions**: [Document platform, device, navigation, storage, or
+  interaction assumptions introduced by this feature]
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
