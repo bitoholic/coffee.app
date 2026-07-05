@@ -86,9 +86,10 @@ Build the MVP of coffee.app - a cross-platform mobile app for recording and mana
 
 ## Navigation Structure
 
-- **Compose Navigation (voyager / decompose / built-in nav)**: Using a simple navigation library or Compose Multiplatform's built-in navigate patterns. A navigation host drives screen transitions.
+- **Compose Navigation (built-in nav)**: Using Compose Multiplatform's built-in navigation (`NavHost` / `NavController`) for screen transitions. A navigation host drives screen transitions. Avoids external nav library dependencies.
 - **Screens**: BrewEntryList → BrewEntryDetail | BrewEntryForm (add/edit). Modals for origin picker and origin creation.
-- **Platform-specific wrappers**: Main Activity (Android) / SwiftUI wrapper (iOS) host the Compose entry point.
+- **iOS entry point**: `composeApp/src/iosMain/kotlin/coffee/app/MainViewController.kt` and `iosApp/` (thin Kotlin/Native + Swift host)
+- **Platform-specific wrappers**: Main Activity (Android) / Swift host app (iOS) wrap the Compose entry point.
 
 ## Form Validation Approach
 
@@ -277,7 +278,7 @@ README.md                # Project setup, run, and test instructions
 - User accounts, authentication
 - Cloud sync, backend services, APIs
 - Sharing entries, ratings, favourites, photos
-- Brewing timers, recipes, multiple grinder profiles, multiple brewing methods
+- Brewing timers, brewing recipes, multiple grinder profiles, multiple brewing methods
 - Notifications, analytics, payments, social features
 - App store publishing (MVP focuses on local development and testing)
 - Renaming or deleting custom origins (MVP limits management to creation)
