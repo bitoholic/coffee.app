@@ -4,10 +4,12 @@ This guide outlines the steps to set up, run, and test the coffee.app MVP locall
 
 ## Prerequisites
 
-- **macOS**: Xcode installed
-- **Swift**: Swift 5.9 or later (typically comes with Xcode)
+- **Java**: JDK 17 or later
+- **Android Studio**: Ladybug (2024.3) or later with KMP plugin
+- **Kotlin**: Kotlin 2.1.x (bundled with Gradle wrapper)
+- **Xcode**: 15.4 or later (for iOS simulator target)
 - **Git**: For cloning the repository
-- **Optional**: Device configured for local development (physical device or simulator)
+- **Optional**: Physical Android device or iOS device for testing
 
 ## Setup
 
@@ -17,29 +19,49 @@ This guide outlines the steps to set up, run, and test the coffee.app MVP locall
     cd coffee.app
     ```
 
-2.  **Open the project**:
-    Navigate to the `ios/` directory and open the `coffee_tracker_mvp.xcodeproj` file in Xcode.
+2.  **Open the project in Android Studio**:
+    Open the root directory — it contains the Gradle wrapper, `settings.gradle.kts`, and the KMP project.
 
-3.  **Review dependencies**:
-    The project uses SwiftUI for the UI and CoreData for local persistence. XCTest is included for testing. No external dependencies requiring specific installation beyond Xcode are expected for this MVP.
+3.  **Sync Gradle**:
+    Android Studio will prompt you to sync — accept. This downloads Compose Multiplatform, Room KMP, and Kotlin dependencies.
 
 ## Running the App
 
-1.  **Open `ios/coffee_tracker_mvp.xcodeproj` in Xcode.**
-2.  **Select a target device**: Choose a physical iOS device or an iOS Simulator.
-3.  **Build and Run**: Click the "Run" button (play icon) in Xcode.
+### Android
+1.  Select the `composeApp` run configuration
+2.  Choose an Android emulator (API 26+) or connected device
+3.  Click **Run**
+
+### iOS (macOS only)
+1.  Ensure Xcode is installed and you have an iOS simulator available
+2.  In a terminal:
+    ```bash
+    ./gradlew :composeApp:iosSimulatorArm64Run
+    ```
+    Or select the iOS simulator target from the Android Studio run configuration menu.
 
 The app should launch, displaying the main Brew Entry list.
 
 ## Testing
 
-Automated tests are crucial for the Test-First Development principle.
+Automated tests are crucial for the Test-First Development principle. Tests run on the JVM for fast feedback.
 
-1.  **Open `ios/coffee_tracker_mvp.xcodeproj` in Xcode.**
-2.  **Select the 'coffee_tracker_mvp_tests' scheme.**
-3.  **Run Tests**: Click the "Test" button (play icon next to the test scheme) in Xcode.
+1.  **Run all shared tests**:
+    ```bash
+    ./gradlew :composeApp:allTests
+    ```
 
-This will execute all unit and integration tests defined in `Tests/coffee_tracker_mvp_tests/`.
+2.  **Run JVM unit tests only** (fastest):
+    ```bash
+    ./gradlew :composeApp:jvmTest
+    ```
+
+3.  **Run Android instrumentation tests**:
+    ```bash
+    ./gradlew :composeApp:connectedAndroidTest
+    ```
+
+This executes all unit and integration tests defined in `composeApp/src/commonTest/`.
 
 ## Key Flows to Verify
 

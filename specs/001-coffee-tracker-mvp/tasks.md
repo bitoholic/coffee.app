@@ -1,12 +1,12 @@
 ---
-description: "Task list for Coffee Brewing Settings Tracker MVP"
+description: "Task list for Coffee Brewing Settings Tracker MVP (Compose Multiplatform)"
 ---
 
-# Tasks: Coffee Brewing Settings Tracker MVP
+# Tasks: Coffee Brewing Settings Tracker MVP (Compose Multiplatform)
 
 **Input**: Design documents from `specs/001-coffee-tracker-mvp/`
 
-**Prerequisites**: plan.md (required), spec.md (required for user stories), data-model.md, contracts/
+**Prerequisites**: plan.md (required), spec.md (required), data-model.md, contracts/
 
 **Tests**: Tests are REQUIRED by the coffee.app constitution. Include test tasks before implementation tasks for behavior involving data, state, validation, persistence, or important mobile flows. Tests MUST be written and confirmed failing before implementation starts.
 
@@ -14,40 +14,49 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to
-- File paths follow the iOS project structure from plan.md
+- File paths follow the Compose Multiplatform project structure from plan.md
 
 ## Path Conventions
 
-- **iOS App Source**: `ios/coffee_tracker_mvp/`
-- **iOS Tests**: `Tests/coffee_tracker_mvp_tests/`
+- **Shared Code**: `composeApp/src/commonMain/kotlin/coffee/app/`
+- **Android Entry Point**: `composeApp/src/androidMain/kotlin/coffee/app/`
+- **iOS Entry Point**: `composeApp/src/iosMain/kotlin/coffee/app/` and `iosApp/`
+- **Shared Tests**: `composeApp/src/commonTest/kotlin/coffee/app/`
 
 ---
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and basic Xcode/iOS project structure
+**Purpose**: Project initialization, Gradle configuration, and KMP scaffolding
 
-- [ ] T001 Create Xcode iOS project scaffold at `ios/` with SwiftUI app template and CoreData enabled
-- [ ] T002 [P] Create `PersistenceController.swift` with CoreData stack setup at `ios/coffee_tracker_mvp/Persistence/PersistenceController.swift`
-- [ ] T003 [P] Create `Assets.xcassets` with color sets for light and dark mode support at `ios/coffee_tracker_mvp/Resources/`
-- [ ] T004 Add `DateFormatter+Extensions.swift` at `ios/coffee_tracker_mvp/Utilities/`
+- [ ] T001 Scaffold KMP project using the official JetBrains Compose Multiplatform wizard template
+- [ ] T002 Configure `gradle/libs.versions.toml` with Kotlin 2.1.x, Compose Multiplatform, Room KMP, and kotlin.test versions
+- [ ] T003 [P] Create `CoffeeDatabase.kt` with Room KMP database definition at `composeApp/src/commonMain/kotlin/coffee/app/data/database/CoffeeDatabase.kt`
+- [ ] T004 Create `Theme.kt` and `Color.kt` at `composeApp/src/commonMain/kotlin/coffee/app/ui/theme/` with Material 3 light/dark colour schemes
+- [ ] T005 [P] Set up Android entry point at `composeApp/src/androidMain/kotlin/coffee/app/MainActivity.kt`
+- [ ] T006 [P] Set up iOS entry point at `composeApp/src/iosMain/kotlin/coffee/app/MainViewController.kt` and `iosApp/iosApp/iosAppApp.swift`
 
-**Checkpoint**: Xcode project builds successfully on iOS 15+ simulator
+**Checkpoint**: `./gradlew :composeApp:build` succeeds for both Android and iOS simulator targets.
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure — data model entities and persistence — that MUST be complete before ANY user story
+**Purpose**: Core infrastructure — Room entities, DAOs, repositories, and ViewModel scaffolding
 
-- [ ] T005 Create CoreData data model `coffee_tracker_mvp.xcdatamodeld` with BrewEntry entity and attributes (uuid, beanName, beanOrigin, roastType, grinderSetting, portionWeight, description, createdDate, lastModifiedDate) at `ios/coffee_tracker_mvp/Models/`
-- [ ] T006 [P] Create `Origin` CoreData entity with attributes (uuid, name, isCustom) and relationship to BrewEntry at `ios/coffee_tracker_mvp/Models/`
-- [ ] T007 [P] Add One-to-Many relationship between Origin and BrewEntry in CoreData model
-- [ ] T008 Pre-populate Origin store with 14 predefined origins (Brazil, Colombia, Ethiopia, Kenya, Guatemala, Costa Rica, Honduras, Peru, El Salvador, Panama, Indonesia, India, Vietnam, Yemen) in `PersistenceController.swift`
-- [ ] T009 Create `BrewEntryFormViewModel.swift` with validation logic at `ios/coffee_tracker_mvp/ViewModels/`
-- [ ] T010 Create `BrewEntryListViewModel.swift` with fetch and sort logic at `ios/coffee_tracker_mvp/ViewModels/`
+- [ ] T007 Create `BrewEntry.kt` entity with Room annotations at `composeApp/src/commonMain/kotlin/coffee/app/data/model/BrewEntry.kt`
+- [ ] T008 [P] Create `Origin.kt` entity with Room annotations at `composeApp/src/commonMain/kotlin/coffee/app/data/model/Origin.kt`
+- [ ] T009 Create `RoastType.kt` enum at `composeApp/src/commonMain/kotlin/coffee/app/data/model/RoastType.kt`
+- [ ] T010 [P] Create `SortOption.kt` enum at `composeApp/src/commonMain/kotlin/coffee/app/data/model/SortOption.kt`
+- [ ] T011 Create `BrewEntryDao.kt` with CRUD + sort queries at `composeApp/src/commonMain/kotlin/coffee/app/data/database/BrewEntryDao.kt`
+- [ ] T012 [P] Create `OriginDao.kt` with CRUD + case-insensitive lookup at `composeApp/src/commonMain/kotlin/coffee/app/data/database/OriginDao.kt`
+- [ ] T013 [P] Create `BrewEntryRepository.kt` at `composeApp/src/commonMain/kotlin/coffee/app/data/repository/BrewEntryRepository.kt`
+- [ ] T014 [P] Create `OriginRepository.kt` at `composeApp/src/commonMain/kotlin/coffee/app/data/repository/OriginRepository.kt`
+- [ ] T015 Seed predefined origins (14 entries) in `CoffeeDatabase.kt` callback
+- [ ] T016 Create `ValidationUtil.kt` with shared validation functions at `composeApp/src/commonMain/kotlin/coffee/app/util/ValidationUtil.kt`
+- [ ] T017 Create `DateFormatUtil.kt` with date formatting helpers at `composeApp/src/commonMain/kotlin/coffee/app/util/DateFormatUtil.kt`
 
-**Checkpoint**: Foundation ready — models persist, origins seeded, ViewModels compiled
+**Checkpoint**: Room entities compile, DAO queries are valid, repository layer is wired. `./gradlew :composeApp:jvmTest` runs.
 
 ---
 
@@ -55,47 +64,42 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 **Goal**: User can create a brew entry with bean name, origin, roast type, grinder setting, portion weight, and optional description. Validation prevents invalid saves.
 
-**Independent Test**: Open app, tap add, fill valid fields, save, confirm entry appears in list. Restart app, confirm entry persists.
-
 ### Tests for User Story 1 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T011 [P] [US1] Create failing test `test_brewEntry_save_and_fetch` for CoreData BrewEntry creation and retrieval in `Tests/coffee_tracker_mvp_tests/Models/BrewEntryTests.swift`
-- [ ] T012 [P] [US1] Create failing test `test_brewEntry_validation_beanNameRequired` for Bean Name empty/whitespace rejection in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T013 [P] [US1] Create failing test `test_brewEntry_validation_grinderSettingRange` for Grinder Setting 1-48 range in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T014 [P] [US1] Create failing test `test_brewEntry_validation_roastTypeRequired` for Roast Type must be Light/Medium/Dark in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T015 [P] [US1] Create failing test `test_brewEntry_validation_portionWeightPositive` for Portion Weight positive decimal in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T016 [P] [US1] Create failing test `test_brewEntry_validation_descriptionMaxLength` for 500-char limit in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T017 [P] [US1] Create failing test `test_brewEntry_persistence_afterRestart` for data surviving app restart in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
+- [ ] T018 [P] [US1] Write failing test `test_brewEntry_saveAndFetch` for Room DAO insert + read in `BrewEntryDaoTest.kt`
+- [ ] T019 [P] [US1] Write failing test `test_validation_beanNameRequired` for empty/whitespace rejection in `ValidationUtilTest.kt`
+- [ ] T020 [P] [US1] Write failing test `test_validation_grinderSettingRange` for 1-48 range in `ValidationUtilTest.kt`
+- [ ] T021 [P] [US1] Write failing test `test_validation_roastTypeRequired` for valid enum check in `ValidationUtilTest.kt`
+- [ ] T022 [P] [US1] Write failing test `test_validation_portionWeightPositive` for positive decimal in `ValidationUtilTest.kt`
+- [ ] T023 [P] [US1] Write failing test `test_validation_descriptionMaxLength` for 500-char limit in `ValidationUtilTest.kt`
+- [ ] T024 [P] [US1] Write failing test `test_brewEntry_persistence_afterRestart` for Room in-memory DB persistence in `BrewEntryDaoTest.kt`
 
 ### Implementation for User Story 1
 
-- [ ] T018 [P] [US1] Implement `BrewEntryFormView.swift` with all fields (Bean Name, Origin, Roast Type, Grinder Setting, Portion Weight, Description) at `ios/coffee_tracker_mvp/Views/BrewEntryForm/BrewEntryFormView.swift`
-- [ ] T019 [P] [US1] Implement validation logic in `BrewEntryFormViewModel.swift` for Bean Name (required, non-empty), Grinder Setting (1-48 integer), Roast Type (required picker), Portion Weight (positive decimal), Description (max 500 chars)
-- [ ] T020 [P] [US1] Implement CoreData save operation in `BrewEntryFormViewModel.swift` that sets createdDate and lastModifiedDate
-- [ ] T021 [US1] Wire `BrewEntryFormView.swift` to `BrewEntryListViewModel.swift` for entry list refresh on save
+- [ ] T025 [US1] Implement `BrewEntryFormScreen.kt` with all input fields (Bean Name, Origin picker, Roast Type picker, Grinder Setting, Portion Weight, Description) at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/form/BrewEntryFormScreen.kt`
+- [ ] T026 [US1] Implement `BrewEntryFormViewModel.kt` with validation, save logic, and date stamping at `composeApp/src/commonMain/kotlin/coffee/app/viewmodel/BrewEntryFormViewModel.kt`
+- [ ] T027 [US1] Wire form save to repository and navigate back to list
 
-**Checkpoint**: User can create a valid brew entry. Invalid entries are blocked with feedback. Entry persists after restart.
+**Checkpoint**: User can create a valid brew entry. Invalid entries are blocked with feedback. Entry persists after process restart (Room in-memory test passes).
 
 ---
 
 ## Phase 4: User Story 2 — Choose and Reuse Coffee Origins (Priority: P2)
 
-**Goal**: User can select from 14 predefined origins or create a reusable custom origin inline. Custom origins persist and are available for future entries.
-
-**Independent Test**: Open add entry, select Brazil from list. Create custom origin "My Blend", save entry, reopen, confirm "My Blend" is selectable. Restart, confirm it's still there.
+**Goal**: User can select from 14 predefined origins or create a reusable custom origin inline.
 
 ### Tests for User Story 2 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T022 [P] [US2] Create failing test `test_origin_predefinedList_complete` for all 14 origins in `Tests/coffee_tracker_mvp_tests/Models/OriginTests.swift`
-- [ ] T023 [P] [US2] Create failing test `test_origin_create_customAndReusable` for custom origin creation and reuse in `Tests/coffee_tracker_mvp_tests/Models/OriginTests.swift`
-- [ ] T024 [P] [US2] Create failing test `test_origin_create_duplicateCaseInsensitive` for case-insensitive duplicate prevention in `Tests/coffee_tracker_mvp_tests/Models/OriginTests.swift`
-- [ ] T025 [P] [US2] Create failing test `test_origin_persistence_afterRestart` for custom origin persistence in `Tests/coffee_tracker_mvp_tests/Models/OriginTests.swift`
+- [ ] T028 [P] [US2] Write failing test `test_origin_predefinedListComplete` for all 14 origins seeded in `OriginDaoTest.kt`
+- [ ] T029 [P] [US2] Write failing test `test_origin_createCustomAndReusable` for custom origin insert + fetch in `OriginDaoTest.kt`
+- [ ] T030 [P] [US2] Write failing test `test_origin_duplicateCaseInsensitive` for case-insensitive duplicate prevention in `OriginDaoTest.kt`
+- [ ] T031 [P] [US2] Write failing test `test_origin_persistence` for origin surviving mock restart in `OriginDaoTest.kt`
 
 ### Implementation for User Story 2
 
-- [ ] T026 [P] [US2] Implement `OriginPicker.swift` with predefined origins list and "Add Custom" option at `ios/coffee_tracker_mvp/Views/BrewEntryForm/OriginPicker.swift`
-- [ ] T027 [P] [US2] Implement `OriginCreateView.swift` with text input and case-insensitive duplicate check at `ios/coffee_tracker_mvp/Views/BrewEntryForm/OriginCreateView.swift`
-- [ ] T028 [US2] Implement custom origin CoreData save and fetch in `BrewEntryFormViewModel.swift` that merges custom + predefined origins for picker display
+- [ ] T032 [P] [US2] Implement `OriginPickerSheet.kt` with predefined origins list and "Add Custom" option at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/form/OriginPickerSheet.kt`
+- [ ] T033 [P] [US2] Implement `OriginCreateDialog.kt` with text input and case-insensitive duplicate check at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/form/OriginCreateDialog.kt`
+- [ ] T034 [US2] Integrate origin creation and selection in `BrewEntryFormViewModel.kt`
 
 **Checkpoint**: User can select predefined or create custom origins. Custom origins persist and remain reusable.
 
@@ -103,20 +107,18 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 ## Phase 5: User Story 3 — Review Brew Entries (Priority: P3)
 
-**Goal**: User can view a concise list of brew entries and open a detail view to see all information.
-
-**Independent Test**: Create multiple entries, confirm list shows Bean Name, Origin, Roast Type, Grinder Setting, Portion Weight, Created Date. Tap entry, confirm detail shows Description, Created Date, Last Modified Date.
+**Goal**: User can view a concise list and open a detail view.
 
 ### Tests for User Story 3 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T029 [P] [US3] Create failing test `test_brewEntry_list_displayFields` for list summary field display in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T030 [P] [US3] Create failing test `test_brewEntry_detail_displayAllFields` for detail view completeness in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
+- [ ] T035 [P] [US3] Write failing test `test_brewEntry_list_displayFields` for list summary fields in `BrewEntryListViewModelTest.kt`
+- [ ] T036 [P] [US3] Write failing test `test_brewEntry_detail_displayAllFields` for detail view completeness in `BrewEntryListViewModelTest.kt`
 
 ### Implementation for User Story 3
 
-- [ ] T031 [P] [US3] Implement `BrewEntryListView.swift` with `List`/`ForEach` showing Bean Name, Origin, Roast Type, Grinder Setting, Portion Weight, Created Date at `ios/coffee_tracker_mvp/Views/BrewEntryList/BrewEntryListView.swift`
-- [ ] T032 [P] [US3] Implement `BrewEntryRow.swift` as the list row component at `ios/coffee_tracker_mvp/Views/BrewEntryList/BrewEntryRow.swift`
-- [ ] T033 [P] [US3] Implement `BrewEntryDetailView.swift` showing all entry info including Description, Created Date, Last Modified Date at `ios/coffee_tracker_mvp/Views/BrewEntryDetail/BrewEntryDetailView.swift`
+- [ ] T037 [P] [US3] Implement `BrewEntryListScreen.kt` with `LazyColumn` showing Bean Name, Origin, Roast Type, Grinder Setting, Portion Weight, Created Date at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/list/BrewEntryListScreen.kt`
+- [ ] T038 [P] [US3] Implement `BrewEntryRow.kt` as the list row composable at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/list/BrewEntryRow.kt`
+- [ ] T039 [P] [US3] Implement `BrewEntryDetailScreen.kt` showing all entry info at `composeApp/src/commonMain/kotlin/coffee/app/ui/screens/detail/BrewEntryDetailScreen.kt`
 
 **Checkpoint**: List and detail views display correct fields. Navigation between list and detail works.
 
@@ -124,48 +126,44 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 ## Phase 6: User Story 4 — Sort Brew Entries (Priority: P4)
 
-**Goal**: User can sort entries by Created Date (default, newest first), Bean Name (A-Z), Origin (A-Z), or Last Modified Date.
-
-**Independent Test**: Create entries with varied names and dates, verify default newest-first sort. Change to Bean Name A-Z, confirm alphabetical. Change to Origin A-Z, etc.
+**Goal**: User can sort by Created Date (default, newest first), Bean Name (A-Z), Origin (A-Z), Last Modified Date.
 
 ### Tests for User Story 4 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T034 [P] [US4] Create failing test `test_brewEntry_sort_defaultNewestFirst` for default sort order in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T035 [P] [US4] Create failing test `test_brewEntry_sort_beanNameAZ` for bean name sort in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T036 [P] [US4] Create failing test `test_brewEntry_sort_originAZ` for origin sort in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T037 [P] [US4] Create failing test `test_brewEntry_sort_lastModifiedDate` for last modified sort in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
+- [ ] T040 [P] [US4] Write failing test `test_brewEntry_sort_defaultNewestFirst` in `BrewEntryListViewModelTest.kt`
+- [ ] T041 [P] [US4] Write failing test `test_brewEntry_sort_beanNameAZ` in `BrewEntryListViewModelTest.kt`
+- [ ] T042 [P] [US4] Write failing test `test_brewEntry_sort_originAZ` in `BrewEntryListViewModelTest.kt`
+- [ ] T043 [P] [US4] Write failing test `test_brewEntry_sort_lastModifiedDate` in `BrewEntryListViewModelTest.kt`
 
 ### Implementation for User Story 4
 
-- [ ] T038 [US4] Add sort state management to `BrewEntryListViewModel.swift` with sort descriptor toggle for Bean Name A-Z, Origin A-Z, Created Date, Last Modified Date
-- [ ] T039 [US4] Add sort picker UI to `BrewEntryListView.swift` (Segmented Picker or Menu with sort options)
+- [ ] T044 [US4] Add sort option state management to `BrewEntryListViewModel.kt` and pass `SortOption` enum to `BrewEntryDao`
+- [ ] T045 [US4] Add sort picker UI (DropdownMenu / SegmentedButton) to `BrewEntryListScreen.kt`
 
-**Checkpoint**: List sorting works for all 4 sort modes. Default is newest-first.
+**Checkpoint**: List sorting works for all 4 modes. Default is newest-first.
 
 ---
 
 ## Phase 7: User Story 5 — Edit or Delete Brew Entries Safely (Priority: P5)
 
-**Goal**: User can edit or delete entries without accidental data loss. Delete requires confirmation. Unsaved edits warn before discarding.
-
-**Independent Test**: Edit an entry, save, confirm changes. Start edit, change a field, navigate back — confirm warning appears. Delete an entry, confirm dialog appears, confirm, entry disappears.
+**Goal**: User can edit or delete entries without accidental data loss.
 
 ### Tests for User Story 5 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T040 [P] [US5] Create failing test `test_brewEntry_edit_savesUpdatedValues` for edit save in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T041 [P] [US5] Create failing test `test_brewEntry_edit_updatesLastModifiedDate` for date update in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T042 [P] [US5] Create failing test `test_brewEntry_delete_confirmationRequired` for delete confirmation in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T043 [P] [US5] Create failing test `test_brewEntry_unsavedChanges_warning` for unsaved changes detection in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
-- [ ] T044 [P] [US5] Create failing test `test_brewEntry_duplicateEntry_warning` for duplicate entry warning in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryFormViewModelTests.swift`
+- [ ] T046 [P] [US5] Write failing test `test_brewEntry_edit_savesUpdatedValues` in `BrewEntryDaoTest.kt`
+- [ ] T047 [P] [US5] Write failing test `test_brewEntry_edit_updatesLastModifiedDate` in `BrewEntryDaoTest.kt`
+- [ ] T048 [P] [US5] Write failing test `test_brewEntry_delete_confirmationRequired` in `BrewEntryListViewModelTest.kt`
+- [ ] T049 [P] [US5] Write failing test `test_brewEntry_unsavedChanges_warning` in `BrewEntryFormViewModelTest.kt`
+- [ ] T050 [P] [US5] Write failing test `test_brewEntry_duplicateEntry_warning` in `BrewEntryFormViewModelTest.kt`
 
 ### Implementation for User Story 5
 
-- [ ] T045 [US5] Add edit mode to `BrewEntryFormView.swift` — pre-populate fields from existing BrewEntry
-- [ ] T046 [US5] Add CoreData update operation in `BrewEntryFormViewModel.swift` that updates lastModifiedDate
-- [ ] T047 [US5] Add delete confirmation `.confirmationDialog` or `.alert` in `BrewEntryDetailView.swift` or `BrewEntryListView.swift`
-- [ ] T048 [US5] Add CoreData delete operation in `BrewEntryListViewModel.swift` (requires confirmation before executing)
-- [ ] T049 [US5] Add unsaved-changes detection and `.confirmationDialog` when navigating back from `BrewEntryFormView.swift` with changed fields
-- [ ] T050 [US5] Add duplicate-entry warning dialog in `BrewEntryFormViewModel.swift` that compares all fields against existing entries
+- [ ] T051 [US5] Add edit mode to `BrewEntryFormScreen.kt` — pre-populate fields from existing BrewEntry
+- [ ] T052 [US5] Add Room update operation in `BrewEntryDao.kt` that updates `lastModifiedDate`
+- [ ] T053 [US5] Add `AlertDialog` confirmation on delete in `BrewEntryListScreen.kt` or `BrewEntryDetailScreen.kt`
+- [ ] T054 [US5] Add Room delete operation in `BrewEntryDao.kt` (confirmed before calling)
+- [ ] T055 [US5] Add unsaved-changes detection with `AlertDialog` in `BrewEntryFormScreen.kt` when navigating back with changed fields
+- [ ] T056 [US5] Add duplicate-entry warning dialog in `BrewEntryFormViewModel.kt` comparing all fields
 
 **Checkpoint**: Edit saves correctly, delete requires confirmation, unsaved edits trigger warning, duplicates trigger warning but allow save.
 
@@ -175,17 +173,15 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 **Goal**: App follows system theme by default, remains readable in light and dark modes.
 
-**Independent Test**: Toggle device theme between light and dark. Verify all screens (list, add/edit, detail, origin picker, delete confirmation) remain readable.
-
 ### Tests for User Story 6 (REQUIRED — write before implementation) ⚠️
 
-- [ ] T051 [P] [US6] Create failing test `test_theme_colorSchemeRespectsSystem` for system theme default in `Tests/coffee_tracker_mvp_tests/ViewModels/BrewEntryListViewModelTests.swift`
-- [ ] T052 [P] [US6] Create failing test `test_theme_lightMode_readable` for light mode readability in `Tests/coffee_tracker_mvp_tests/Utilities/ThemeTests.swift`
+- [ ] T057 [P] [US6] Write failing test `test_theme_systemDefaultRespected` for system theme default
+- [ ] T058 [P] [US6] Write failing test `test_theme_lightMode_readable` for light mode colour contrast
 
 ### Implementation for User Story 6
 
-- [ ] T053 [P] [US6] Apply `@Environment(\.colorScheme)` conditional styling to all views (BrewEntryListView, BrewEntryFormView, BrewEntryDetailView, OriginPicker, OriginCreateView)
-- [ ] T054 [P] [US6] Configure `Assets.xcassets` color sets with light/dark appearance variants for primary text, background, and accent colors
+- [ ] T059 [P] [US6] Apply `MaterialTheme` with `isSystemInDarkTheme()` in `App.kt` entry composable
+- [ ] T060 [P] [US6] Verify all screens use `MaterialTheme.colorScheme` for backgrounds, text, and accent colours
 
 **Checkpoint**: App renders correctly in system, light, and dark modes on all MVP screens.
 
@@ -195,11 +191,11 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 
 **Purpose**: Final quality checks, verification, and hardening
 
-- [ ] T055 [P] Update `README.md` with setup, run, and test instructions for the Xcode project
-- [ ] T056 Verify Brew Entry and custom origin persistence by running app restart test flow
-- [ ] T057 Verify system/light/dark theme behavior across all MVP screens
-- [ ] T058 [P] Run full XCTest suite, confirm all tests pass
-- [ ] T059 Run quickstart.md validation against the running app
+- [ ] T061 [P] Update `README.md` with setup, run, and test instructions for Compose Multiplatform
+- [ ] T062 Verify Brew Entry and custom origin persistence by running app restart test flow
+- [ ] T063 Verify system/light/dark theme behaviour across all MVP screens
+- [ ] T064 [P] Run full `./gradlew :composeApp:allTests`, confirm all tests pass
+- [ ] T065 Run quickstart.md validation against the running app on Android
 
 ---
 
@@ -210,25 +206,23 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 - **Setup (Phase 1)**: No dependencies — can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion — BLOCKS all user stories
 - **User Stories (Phase 3–8)**: All depend on Foundational phase completion
-  - Stories can proceed sequentially in priority order
-  - US1 (P1) must be complete first as MVP baseline
-  - US2 (P2) through US6 (P6) build on US1
 - **Polish (Phase 9)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
 
-- **US1 — Record a Brew Entry (P1)**: Core MVP — foundation for all stories. No dependencies on other stories.
+- **US1 — Record a Brew Entry (P1)**: Core MVP — foundation for all stories.
 - **US2 — Choose Origins (P2)**: Integrates with US1 form but independently testable.
-- **US3 — Review Entries (P3)**: Needs brew entries (US1) to display. Read-only, independently testable.
-- **US4 — Sort Entries (P4)**: Built on US3 list view. Independently testable sorting logic.
-- **US5 — Edit/Delete (P5)**: Builds on US1 (data) and US3 (detail). Independently testable safety flows.
-- **US6 — Themes (P6)**: Applies across all screens. Independently testable with theme toggle.
+- **US3 — Review Entries (P3)**: Needs brew entries (US1). Read-only, independently testable.
+- **US4 — Sort Entries (P4)**: Built on US3 list view. Independently testable.
+- **US5 — Edit/Delete (P5)**: Builds on US1 and US3.
+- **US6 — Themes (P6)**: Cross-cutting, independently testable with theme toggle.
 
 ### Within Each User Story
 
 - Tests MUST be written and FAIL before implementation
-- CoreData operations before UI wiring
-- Validation before save/update flows
+- Room entities before DAOs
+- DAOs before ViewModels
+- ViewModels before UI screens
 - Story complete before moving to next priority
 
 ### Parallel Opportunities
@@ -236,5 +230,5 @@ description: "Task list for Coffee Brewing Settings Tracker MVP"
 - All Setup tasks marked [P] can run in parallel
 - All Foundational tasks marked [P] can run in parallel
 - Tests within a story marked [P] can run in parallel
-- Models within a story marked [P] can run in parallel (where applicable)
-- Theme work (US6) can be done in parallel with other stories since it's cross-cutting
+- UI screens within a story marked [P] can run in parallel
+- Theme work (US6) can be done in parallel with other stories

@@ -6,29 +6,50 @@
 Represents a single recorded brewing attempt for a coffee bean. Multiple entries can exist for the same bean to track different experiments.
 
 **Attributes**:
-- `uuid`: UUID (Primary Key, automatically generated)
+- `uuid`: String (Primary Key, auto-generated UUID)
 - `beanName`: String (Required, non-empty after trimming whitespace. MVP allows duplicate entries with a warning.)
 - `beanOrigin`: String (Optional, references an Origin entity. If custom, validated for cleanliness and uniqueness against existing origins, case-insensitively.)
-- `roastType`: String (Required. Must be one of "Light", "Medium", or "Dark". Enforced via picker/enum.)
-- `grinderSetting`: Int16 (Required. Must be between 1 and 48 inclusive.)
-- `portionWeight`: Decimal (Required. Positive decimal number representing grams. Stored in storage, displayed with 'g'.)
+- `roastType`: String (Required. Must be one of "Light", "Medium", or "Dark". Enforced via enum `RoastType`.)
+- `grinderSetting`: Int (Required. Must be between 1 and 48 inclusive.)
+- `portionWeight`: Double (Required. Positive decimal number representing grams. Stored as Double, displayed with 'g'.)
 - `description`: String? (Optional. Maximum length 500 characters.)
-- `createdDate`: Date (Auto-set when Brew Entry is first saved.)
-- `lastModifiedDate`: Date (Auto-set when Brew Entry is first saved; updated on edit completion.)
+- `createdDate`: Long (Epoch milliseconds. Auto-set when Brew Entry is first saved.)
+- `lastModifiedDate`: Long (Epoch milliseconds. Auto-set when Brew Entry is first saved; updated on edit completion.)
 
 **Relationships**:
-- Many-to-One with Origin (a BrewEntry belongs to one Origin).
+- Many-to-One with Origin (a BrewEntry has a `beanOrigin` FK referencing `Origin.name`).
 
 ### Origin
 Represents a coffee bean's origin, either predefined or custom.
 
 **Attributes**:
-- `uuid`: UUID (Primary Key)
-- `name`: String (Required. Case-insensitive unique identifier. Cleaned of leading/trailing whitespace.)
-- `isCustom`: Bool (True if created by user, False if predefined.)
+- `name`: String (Primary Key. Case-insensitive unique identifier. Cleaned of leading/trailing whitespace.)
+- `isCustom`: Boolean (True if created by user, False if predefined.)
 
 **Relationships**:
 - One-to-Many with BrewEntry (an Origin can be used in many BrewEntries).
+
+## Enums
+
+### RoastType
+```kotlin
+enum class RoastType {
+    Light,
+    Medium,
+    Dark
+}
+```
+
+### SortOption
+```kotlin
+enum class SortOption {
+    CreatedDateDesc,    // default
+    BeanNameAZ,
+    OriginAZ,
+    CreatedDate,
+    LastModifiedDate
+}
+```
 
 ## Predefined Origins
 
@@ -66,7 +87,7 @@ The following origins MUST be available for selection:
 
 ## Persistence
 
-- All data (Brew Entries, custom Origins) stored locally using CoreData.
+- All data (Brew Entries, custom Origins) stored locally using Room KMP (SQLite).
 - Data MUST persist after app restarts.
 
 ## Sorting
@@ -82,9 +103,9 @@ The following origins MUST be available for selection:
 
 ## Mobile Assumptions
 
-- **Target Platform**: iOS 15+.
+- **Target Platform**: Android API 26+ and iOS 15+ (via Compose Multiplatform).
 - **Device**: Assumes standard mobile device form factor and multi-touch interaction.
-- **Date Formatting**: Respects device locale settings.
-- **Navigation**: SwiftUI standard patterns (TabView, NavigationView, NavigationStack, modal presentations for forms/pickers).
-- **Local Storage**: CoreData for structured data persistence.
-- **Test Commands**: XCTest commands executed via `xcodebuild` or similar; actual commands TBD in tasks.md.
+- **Date Formatting**: Epoch milliseconds stored in DB; formatted for display using `java.time` / `kotlinx-datetime`.
+- **Navigation**: Compose Navigation (NavHost) for screen transitions, `AlertDialog` and `BottomSheet` for modals.
+- **Local Storage**: Room KMP for structured SQLite persistence.
+- **Test Commands**: `./gradlew :composeApp:allTests` for shared tests, `./gradlew :composeApp:jvmTest` for JVM-only.
