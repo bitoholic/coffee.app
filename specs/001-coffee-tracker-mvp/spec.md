@@ -8,6 +8,16 @@
 
 **Input**: Combined Telegram app brief for the coffee.app MVP: build a local-first mobile brewing journal for recording, viewing, editing, deleting, sorting, and safely managing coffee bean brewing settings and reusable custom origins.
 
+## Clarifications
+
+### Session 2026-07-05
+
+- Q: How should Portion Weight be represented in the MVP? → A: Grams only, positive decimal, display with g.
+- Q: What should “manage reusable custom origins” include in the MVP? → A: Create custom origins only.
+- Q: Should the MVP prevent users from saving exact duplicate Brew Entries? → A: Warn but allow duplicates.
+- Q: Which delete safety pattern should the MVP require? → A: Confirmation before deletion.
+- Q: When should the app warn about unsaved changes? → A: Any changed field.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Record a Brew Entry (Priority: P1)
@@ -91,8 +101,8 @@ As a home coffee enthusiast, I want to edit or delete brew entries without accid
 **Acceptance Scenarios**:
 
 1. **Given** an existing brew entry, **When** the user edits valid fields and saves, **Then** the entry is updated and Last Modified Date changes.
-2. **Given** the user has unsaved add or edit changes, **When** they attempt to leave the flow, **Then** the app warns or asks for confirmation before discarding those changes.
-3. **Given** an existing brew entry, **When** the user requests deletion, **Then** the app prevents accidental data loss through confirmation before deletion or undo after deletion.
+2. **Given** the user has changed any field in an add or edit flow, **When** they attempt to leave without saving, **Then** the app warns or asks for confirmation before discarding those changes.
+3. **Given** an existing brew entry, **When** the user requests deletion, **Then** the app asks for confirmation before deleting the entry.
 4. **Given** an entry has been edited or deleted, **When** the app is restarted, **Then** the persisted data reflects the completed confirmed change.
 
 ---
@@ -117,14 +127,16 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 
 - Bean Name is empty or contains only whitespace: the app treats it as missing and prevents saving.
 - Grinder Setting is blank, not a whole number, less than 1, or greater than 48: the app prevents saving and explains the valid range.
+- Portion Weight is blank, zero, negative, or not a valid decimal number of grams: the app prevents saving and explains that Portion Weight must be a positive gram value.
 - Roast Type is missing or not one of Light, Medium, or Dark: the app prevents saving.
 - Description is omitted: the app allows saving.
 - Description exceeds 500 characters: the app prevents saving or requires the text to be shortened before saving.
 - Origin creation uses extra spaces or casing that matches an existing predefined or custom origin: the app prevents duplicate origins.
 - Multiple Brew Entries use the same Bean Name: the app allows them as separate experiments.
-- A custom origin is reused by existing Brew Entries: managing origins must not silently break or erase existing entries.
-- The user attempts to leave an add or edit flow with unsaved changes: the app warns or asks for confirmation before discarding changes.
-- The user initiates deletion unintentionally: deletion requires confirmation before completion or provides undo after completion.
+- Saving an exact duplicate Brew Entry (same bean name, origin, roast, grinder, and portion weight): the app warns the user about the existing entry but allows saving if they confirm.
+- Custom origin management in the MVP is create-only: users cannot rename or delete origins in the MVP.
+- The user changes any field in an add or edit flow and then attempts to leave without saving: the app warns or asks for confirmation before discarding changes.
+- The user initiates deletion unintentionally: deletion requires confirmation before completion.
 - The app restarts after Brew Entries or custom origins are created, edited, or deleted: confirmed changes remain persisted.
 - The app is used in system, light, or dark theme modes: all MVP flows remain readable and usable.
 
@@ -149,10 +161,10 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 - **FR-015**: Custom origins MUST be stored locally.
 - **FR-016**: Custom origins MUST become reusable and available for selection in future Brew Entries.
 - **FR-017**: Origin names MUST NOT create duplicates that differ only by letter casing.
-- **FR-018**: The app MUST allow the user to manage reusable custom origins.
+- **FR-018**: The app MUST allow the user to create reusable custom origins; renaming and deleting custom origins are out of scope for the MVP.
 - **FR-019**: Roast Type MUST be one of Light, Medium, or Dark.
 - **FR-020**: Grinder Setting MUST be a whole number from 1 to 48 inclusive.
-- **FR-021**: Portion Weight MUST be recorded and displayed as part of each Brew Entry.
+- **FR-021**: Portion Weight MUST be recorded as a positive decimal number of grams and displayed with `g`.
 - **FR-022**: Description MUST be optional.
 - **FR-023**: Description MUST allow no more than 500 characters.
 - **FR-024**: Created Date MUST be recorded when a Brew Entry is first saved.
@@ -163,8 +175,8 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 - **FR-029**: The app MUST provide additional sort options for Bean Name A-Z, Origin A-Z, Created Date, and Last Modified Date.
 - **FR-030**: Brew Entries MUST persist after app restart.
 - **FR-031**: Custom origins MUST persist after app restart.
-- **FR-032**: Deleting a Brew Entry MUST protect the user from accidental data loss through confirmation before deletion or undo after deletion.
-- **FR-033**: Unsaved add or edit changes MUST NOT be discarded without warning or confirmation.
+- **FR-032**: Deleting a Brew Entry MUST require confirmation before deletion is completed.
+- **FR-033**: Unsaved add or edit changes MUST NOT be discarded without warning or confirmation whenever any field differs from the saved entry or blank new-entry form.
 - **FR-034**: The app MUST follow the system theme by default.
 - **FR-035**: The app MUST support light mode.
 - **FR-036**: The app MUST support dark mode.
@@ -174,20 +186,21 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 - **FR-040**: The MVP MUST NOT include user accounts, authentication, cloud sync, backend services, APIs, sharing entries, ratings, favourites, photos, brewing timers, brewing recipes, multiple grinder profiles, multiple brewing methods, notifications, analytics, payments, social features, or app store publishing.
 - **FR-041**: The MVP MUST minimize dependencies and include only dependencies that clearly simplify the app.
 - **FR-042**: Mobile platform assumptions MUST be documented during planning before implementation begins.
+- **FR-043**: The app MUST warn the user when trying to save an exact duplicate Brew Entry (same bean name, origin, roast, grinder setting, and portion weight) but allow saving if they choose to proceed.
 
 ### Constitution Alignment *(mandatory)*
 
 - **Brewing-memory value**: The feature is the core coffee.app MVP. It directly solves the user's problem of forgetting which coffee bean brewing settings produced a good result by recording Brew Entries with bean, origin, roast, grinder, portion, description, and date information.
 - **Local-first scope**: The MVP stores Brew Entries and custom origins locally on the device. User accounts, authentication, cloud sync, backend services, APIs, analytics, payments, social features, and app store publishing are explicitly out of scope.
-- **User-safe data changes**: Destructive Brew Entry deletion must use confirmation or undo. Unsaved add/edit changes must not be discarded without warning or confirmation. Custom origin management must not silently break existing Brew Entries.
+- **User-safe data changes**: Destructive Brew Entry deletion must require confirmation before deletion is completed. Unsaved add/edit changes must not be discarded without warning or confirmation whenever any field differs from the saved entry or blank new-entry form. Custom origins are create-only in the MVP, avoiding rename/delete flows that could silently affect existing Brew Entries.
 - **Theme behavior**: The app follows system theme by default, supports light and dark modes, and must remain usable in all three theme contexts.
 - **Mobile assumptions**: Planning must document target platform assumptions, local storage choice, navigation model, theme handling, dependency choices, and local run/test commands before implementation begins.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Brew Entry**: The primary record in coffee.app. Represents one saved brewing experiment for a coffee bean. Multiple Brew Entries may exist for the same Bean Name. Fields: Bean Name, Bean Origin, Roast Type, Grinder Setting, Portion Weight, optional Description, Created Date, and Last Modified Date.
+- **Brew Entry**: The primary record in coffee.app. Represents one saved brewing experiment for a coffee bean. Multiple Brew Entries may exist for the same Bean Name. Fields: Bean Name, Bean Origin, Roast Type, Grinder Setting, Portion Weight in grams, optional Description, Created Date, and Last Modified Date.
 - **Origin**: A reusable coffee origin selectable for a Brew Entry. Origins include the predefined common origins and user-created custom origins. Origin names are unique without regard to letter casing.
-- **Custom Origin**: A user-created Origin stored locally and made available for future Brew Entries. Custom origins are part of the reusable origin selection set.
+- **Custom Origin**: A user-created Origin stored locally and made available for future Brew Entries. Custom origins are part of the reusable origin selection set and cannot be renamed or deleted in the MVP.
 - **Roast Type**: A fixed Brew Entry value with exactly three allowed options: Light, Medium, and Dark.
 - **Sort Option**: A user-selectable list ordering. Supported options are Created Date descending by default, Bean Name A-Z, Origin A-Z, Created Date, and Last Modified Date.
 
@@ -199,13 +212,13 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 - **SC-002**: A user can view the Brew Entry list and identify Bean Name, Origin, Roast Type, Grinder Setting, Portion Weight, and Created Date for each visible entry.
 - **SC-003**: A user can open a Brew Entry detail view and see all saved information, including Description, Created Date, and Last Modified Date.
 - **SC-004**: A user can edit an existing Brew Entry and see the updated values and Last Modified Date after saving.
-- **SC-005**: A user can delete a Brew Entry only through a flow that includes confirmation before deletion or undo after deletion.
+- **SC-005**: A user can delete a Brew Entry only after confirming deletion.
 - **SC-006**: 100% of invalid save attempts for missing Bean Name, invalid Grinder Setting, invalid Roast Type, duplicate Origin casing, or overlong Description are blocked with understandable feedback.
 - **SC-007**: 100% of completed Brew Entry and custom origin saves remain available after app restart.
 - **SC-008**: A user can create a custom origin and reuse it in a later Brew Entry after app restart.
 - **SC-009**: The Brew Entry list defaults to newest-first ordering and supports all required sort options.
 - **SC-010**: The app remains readable and usable in system theme, light mode, and dark mode across list, add, edit, detail, sort, origin selection, and deletion flows.
-- **SC-011**: Automated tests cover core data validation and state behavior for Brew Entries, custom origins, sorting, persistence expectations, and accidental-loss protections.
+- **SC-011**: Automated tests cover core data validation and state behavior for Brew Entries, custom origins, sorting, persistence expectations, duplicate-entry warning, and accidental-loss protections.
 - **SC-012**: A developer can follow README instructions to run the app and tests without needing undocumented commands.
 
 ## Assumptions
@@ -213,9 +226,9 @@ As a mobile app user, I want coffee.app to follow my system theme by default and
 - The target user is a single home coffee enthusiast using the app on their own device.
 - The MVP is a single-user local app with no accounts, identity, sharing, syncing, backend, or cross-device behavior.
 - The app acts as a simple brewing journal and memory aid, not a recipe system, timer, ratings tracker, photo journal, or social product.
-- Portion Weight is a required Brew Entry value that must be saved and displayed; exact units and formatting will be documented during planning.
+- Portion Weight is a required Brew Entry value saved as a positive decimal number of grams and displayed with `g`.
 - Created Date is set when a Brew Entry is first saved. Last Modified Date is set when the entry is first saved and updated whenever the entry is edited.
 - Created Date and Last Modified Date are displayed in a readable format appropriate for the user's device settings.
-- Managing custom origins includes at least creating and reusing custom origins. If planning includes renaming or deleting custom origins, those flows must protect existing Brew Entries from silent data loss or broken references.
+- Managing custom origins in the MVP means creating and reusing custom origins only; renaming and deleting custom origins are deferred out of scope.
 - The app has no requirement to import, export, back up, or restore data in the MVP.
 - Mobile platform, navigation, local storage, dependency, and test-command decisions are intentionally deferred to the planning phase and must be documented there.
