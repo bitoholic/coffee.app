@@ -1,4 +1,4 @@
-rootProject.name = "coffee.app"
+rootProject.name = "coffee-app"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
@@ -16,7 +16,7 @@ pluginManagement {
     }
 }
 
-dependencyResolution {
+dependencyResolutionManagement {
     repositories {
         google {
             mavenContent {
