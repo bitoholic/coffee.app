@@ -58,6 +58,8 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.room.runtime)
             implementation(libs.androidx.test.core)
+            implementation(libs.robolectric)
+            implementation(libs.junit.ext)
         }
     }
 }

@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 
 expect fun getTestDatabaseBuilder(): RoomDatabase.Builder<CoffeeDatabase>
 
-class CoffeeDatabaseTest {
+abstract class CoffeeDatabaseTest {
 
     private lateinit var db: CoffeeDatabase
     private lateinit var brewDao: BrewEntryDao
