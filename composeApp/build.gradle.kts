@@ -45,6 +45,8 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.room.testing)
+            implementation(libs.sqlite.bundled)
         }
 
         androidMain.dependencies {
