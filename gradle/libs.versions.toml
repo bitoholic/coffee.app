@@ -7,7 +7,7 @@ ksp = "2.1.10-1.0.29"
 kotlinx-datetime = "0.6.2"
 androidx-activityCompose = "1.10.0"
 navigation = "2.9.2"
-sqldelight = "2.0.2"
+androidx-sqlite = "2.6.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -19,7 +19,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
-sqlite-bundled = { module = "app.cash.sqldelight:androidx.sqlite-driver", version.ref = "sqldelight" }
+sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
 
 # Navigation
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigation" }
