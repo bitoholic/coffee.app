@@ -53,6 +53,12 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.room.runtime)
         }
+
+        androidUnitTest.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.room.runtime)
+            implementation(libs.androidx.test.core)
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 package coffee.app.data.database
 
-import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.flow.first
@@ -12,6 +11,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+expect fun getTestDatabaseBuilder(): RoomDatabase.Builder<CoffeeDatabase>
+
 class CoffeeDatabaseTest {
 
     private lateinit var db: CoffeeDatabase
@@ -20,9 +21,9 @@ class CoffeeDatabaseTest {
 
     @BeforeTest
     fun setUp() {
-        db = Room.inMemoryDatabaseBuilder<CoffeeDatabase>(
-            name = "coffee_test_db"
-        ).setDriver(BundledSQLiteDriver()).build()
+        db = getTestDatabaseBuilder()
+            .setDriver(BundledSQLiteDriver())
+            .build()
         brewDao = db.brewEntryDao()
         originDao = db.originDao()
     }
