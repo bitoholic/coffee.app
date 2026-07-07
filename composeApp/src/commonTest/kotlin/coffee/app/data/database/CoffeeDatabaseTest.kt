@@ -21,9 +21,7 @@ abstract class CoffeeDatabaseTest {
 
     @BeforeTest
     fun setUp() {
-        db = getTestDatabaseBuilder()
-            .setDriver(BundledSQLiteDriver())
-            .build()
+        db = getTestDatabaseBuilder().build()
         brewDao = db.brewEntryDao()
         originDao = db.originDao()
     }
