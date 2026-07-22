@@ -2,7 +2,6 @@ package coffee.app.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
@@ -22,7 +21,6 @@ abstract class CoffeeDatabase : RoomDatabase() {
         fun getInstance(builder: androidx.room.RoomDatabase.Builder<CoffeeDatabase>): CoffeeDatabase {
             return instance ?: synchronized(this) {
                 instance ?: builder
-                    .setDriver(BundledSQLiteDriver())
                     .setQueryCoroutineContext(Dispatchers.IO)
                     .build()
                     .also { db ->
