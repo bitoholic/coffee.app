@@ -1,15 +1,51 @@
 package coffee.app.data.database
 
 import androidx.room.Database
-import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.runBlocking
 
 @Database(
-    entities = [BrewEntryEntity::class, OriginEntity::class],
+    entities = [BrewEntry::class, Origin::class],
     version = 1,
     exportSchema = false
 )
 abstract class CoffeeDatabase : RoomDatabase() {
     abstract fun brewEntryDao(): BrewEntryDao
     abstract fun originDao(): OriginDao
+
+    companion object {
+        private var instance: CoffeeDatabase? = null
+
+        fun getInstance(builder: androidx.room.RoomDatabase.Builder<CoffeeDatabase>): CoffeeDatabase {
+            return instance ?: synchronized(this) {
+                instance ?: builder
+                    .setDriver(BundledSQLiteDriver())
+                    .setQueryCoroutineContext(Dispatchers.IO)
+                    .build()
+                    .also { db ->
+                        instance = db
+                        seedOrigins(db)
+                    }
+            }
+        }
+
+        private fun seedOrigins(db: CoffeeDatabase) {
+            runBlocking(Dispatchers.IO) {
+                val dao = db.originDao()
+                val predefinedOrigins = listOf(
+                    "Brazil", "Colombia", "Ethiopia", "Kenya", "Guatemala",
+                    "Costa Rica", "Honduras", "Peru", "El Salvador", "Panama",
+                    "Indonesia", "India", "Vietnam", "Yemen"
+                )
+                for (name in predefinedOrigins) {
+                    if (!dao.existsIgnoreCase(name)) {
+                        dao.insert(Origin(name = name, isCustom = false))
+                    }
+                }
+            }
+        }
+    }
 }

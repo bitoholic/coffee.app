@@ -33,96 +33,121 @@ abstract class CoffeeDatabaseTest {
 
     @Test
     fun testInsertAndReadBrewEntry() = runBlocking {
-        val origin = OriginEntity(
-            country = "Ethiopia",
-            region = "Yirgacheffe",
-            roaster = "Local Roaster",
-            roastDate = 1700000000000L,
-            roastProfile = "Light"
+        val brew = BrewEntry(
+            beanName = "Ethiopian Yirgacheffe",
+            beanOrigin = "Ethiopia",
+            roastType = "Light",
+            grinderSetting = 15,
+            portionWeight = 18.0,
+            description = "Great fruity notes",
+            createdDate = 1700000001000L,
+            lastModifiedDate = 1700000001000L
         )
-        val originId = originDao.insertOrigin(origin)
-        assertTrue(originId > 0, "Origin ID should be positive")
+        brewDao.upsert(brew)
 
-        val brew = BrewEntryEntity(
-            timestamp = 1700000001000L,
-            grindSize = 15.0f,
-            doseWeightGrams = 18.0f,
-            yieldWeightGrams = 36.0f,
-            extractionTimeSeconds = 30,
-            notes = "Great fruity notes",
-            originId = originId
-        )
-        val brewId = brewDao.insertBrew(brew)
-        assertTrue(brewId > 0, "Brew ID should be positive")
-
-        val allBrews = brewDao.observeAllBrews().first()
+        val allBrews = brewDao.observeAllCreatedDateDesc().first()
         assertEquals(1, allBrews.size, "Should have exactly one brew")
         with(allBrews[0]) {
-            assertEquals(brewId, id)
-            assertEquals(15.0f, grindSize)
-            assertEquals(18.0f, doseWeightGrams)
-            assertEquals(36.0f, yieldWeightGrams)
-            assertEquals(30, extractionTimeSeconds)
-            assertEquals("Great fruity notes", notes)
-            assertEquals(originId, originId)
+            assertEquals(brew.uuid, uuid)
+            assertEquals("Ethiopian Yirgacheffe", beanName)
+            assertEquals("Ethiopia", beanOrigin)
+            assertEquals("Light", roastType)
+            assertEquals(15, grinderSetting)
+            assertEquals(18.0, portionWeight)
+            assertEquals("Great fruity notes", description)
         }
     }
 
     @Test
     fun testInsertAndReadOrigin() = runBlocking {
-        val origin = OriginEntity(
-            country = "Colombia",
-            region = "Huila",
-            roaster = "Test Roaster",
-            roastDate = 1700000000000L,
-            roastProfile = "Medium"
-        )
-        val originId = originDao.insertOrigin(origin)
-        assertTrue(originId > 0)
+        val origin = Origin(name = "Colombia", isCustom = false)
+        originDao.insert(origin)
 
-        val fetched = originDao.getOriginById(originId)
-        assertNotNull(fetched)
-        assertEquals("Colombia", fetched.country)
-        assertEquals("Huila", fetched.region)
-        assertEquals("Test Roaster", fetched.roaster)
-        assertEquals("Medium", fetched.roastProfile)
+        val allOrigins = originDao.observeAll().first()
+        assertTrue(allOrigins.any { it.name == "Colombia" })
     }
 
     @Test
     fun testDeleteBrewEntry() = runBlocking {
-        val brew = BrewEntryEntity(
-            timestamp = 1700000001000L,
-            grindSize = 12.0f,
-            doseWeightGrams = 20.0f,
-            yieldWeightGrams = 40.0f,
-            extractionTimeSeconds = 28,
-            notes = "Test delete"
+        val brew = BrewEntry(
+            beanName = "Test Bean",
+            roastType = "Medium",
+            grinderSetting = 12,
+            portionWeight = 20.0,
+            createdDate = 1700000001000L,
+            lastModifiedDate = 1700000001000L
         )
-        val brewId = brewDao.insertBrew(brew)
-        assertTrue(brewId > 0)
+        brewDao.upsert(brew)
 
-        val allBrewsBefore = brewDao.observeAllBrews().first()
+        val allBrewsBefore = brewDao.observeAllCreatedDateDesc().first()
         assertEquals(1, allBrewsBefore.size)
 
-        brewDao.deleteBrew(allBrewsBefore[0])
+        brewDao.deleteByUuid(allBrewsBefore[0].uuid)
 
-        val allBrewsAfter = brewDao.observeAllBrews().first()
+        val allBrewsAfter = brewDao.observeAllCreatedDateDesc().first()
         assertTrue(allBrewsAfter.isEmpty(), "List should be empty after delete")
     }
 
     @Test
-    fun testBrewsOrderedByTimestampDesc() = runBlocking {
-        val brew1 = BrewEntryEntity(timestamp = 1000L, grindSize = 10f, doseWeightGrams = 18f, yieldWeightGrams = 36f, extractionTimeSeconds = 30)
-        val brew2 = BrewEntryEntity(timestamp = 2000L, grindSize = 12f, doseWeightGrams = 20f, yieldWeightGrams = 40f, extractionTimeSeconds = 28)
-        val brew3 = BrewEntryEntity(timestamp = 3000L, grindSize = 14f, doseWeightGrams = 22f, yieldWeightGrams = 44f, extractionTimeSeconds = 32)
+    fun testBrewsOrderedByCreatedDateDesc() = runBlocking {
+        val brew1 = BrewEntry(
+            beanName = "Brew A",
+            roastType = "Light",
+            grinderSetting = 10,
+            portionWeight = 18.0,
+            createdDate = 1000L,
+            lastModifiedDate = 1000L
+        )
+        val brew2 = BrewEntry(
+            beanName = "Brew B",
+            roastType = "Medium",
+            grinderSetting = 12,
+            portionWeight = 20.0,
+            createdDate = 2000L,
+            lastModifiedDate = 2000L
+        )
+        val brew3 = BrewEntry(
+            beanName = "Brew C",
+            roastType = "Dark",
+            grinderSetting = 14,
+            portionWeight = 22.0,
+            createdDate = 3000L,
+            lastModifiedDate = 3000L
+        )
 
-        brewDao.insertBrew(brew1)
-        brewDao.insertBrew(brew2)
-        brewDao.insertBrew(brew3)
+        brewDao.upsert(brew1)
+        brewDao.upsert(brew2)
+        brewDao.upsert(brew3)
 
-        val allBrews = brewDao.observeAllBrews().first()
+        val allBrews = brewDao.observeAllCreatedDateDesc().first()
         assertEquals(3, allBrews.size)
-        assertTrue(allBrews[0].timestamp >= allBrews[1].timestamp, "Should be sorted DESC")
-        assertTrue(allBrews[1].timestamp >= allBrews[2].timestamp, "Should be sorted DESC")
+        assertTrue(allBrews[0].createdDate >= allBrews[1].createdDate, "Should be sorted DESC")
+        assertTrue(allBrews[1].createdDate >= allBrews[2].createdDate, "Should be sorted DESC")
+    }
+
+    @Test
+    fun testOriginExistsIgnoreCase() = runBlocking {
+        originDao.insert(Origin(name = "Ethiopia", isCustom = false))
+
+        assertTrue(originDao.existsIgnoreCase("ethiopia"))
+        assertTrue(originDao.existsIgnoreCase("ETHIOPIA"))
+        assertTrue(originDao.existsIgnoreCase("Ethiopia"))
+    }
+
+    @Test
+    fun testGetBrewEntryById() = runBlocking {
+        val brew = BrewEntry(
+            beanName = "Test Bean",
+            roastType = "Dark",
+            grinderSetting = 20,
+            portionWeight = 15.0,
+            createdDate = 1000L,
+            lastModifiedDate = 1000L
+        )
+        brewDao.upsert(brew)
+
+        val fetched = brewDao.getById(brew.uuid)
+        assertNotNull(fetched)
+        assertEquals("Test Bean", fetched.beanName)
     }
 }

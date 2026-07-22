@@ -1,47 +1,13 @@
 package coffee.app.core
 
+import coffee.app.data.database.BrewEntry
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class ValidationUtilTest {
-
-    @Test
-    fun validateDose_valid_returnsNull() {
-        assertNull(ValidationUtil.validateDose(12.0f))
-    }
-
-    @Test
-    fun validateDose_zero_or_less_returnsError() {
-        assertNotNull(ValidationUtil.validateDose(0.0f))
-        assertNotNull(ValidationUtil.validateDose(-5.0f))
-    }
-
-    @Test
-    fun validateYield_valid_returnsNull() {
-        assertNull(ValidationUtil.validateYield(15.0f))
-    }
-
-    @Test
-    fun validateYield_invalid_returnsError() {
-        assertNotNull(ValidationUtil.validateYield(-2.0f))
-    }
-
-    @Test
-    fun validateExtractionTime_valid_returnsNull() {
-        assertNull(ValidationUtil.validateExtractionTime(120))
-    }
-
-    @Test
-    fun validateExtractionTime_invalid_tooShort_returnsError() {
-        assertNotNull(ValidationUtil.validateExtractionTime(0))
-    }
-
-    @Test
-    fun validateExtractionTime_invalid_tooLong_returnsError() {
-        assertNotNull(ValidationUtil.validateExtractionTime(1000))
-    }
 
     @Test
     fun validateBeanName_valid_returnsNull() {
@@ -55,20 +21,99 @@ class ValidationUtilTest {
     }
 
     @Test
-    fun validateBrew_allValid_returnsNull() {
-        assertNull(ValidationUtil.validateBrew(
-            beanName = "Colombia Supremo",
-            doseGrams = 18.0f,
-            yieldGrams = 36.0f,
-            extractionSeconds = 180
-        ))
+    fun validateGrinderSetting_valid_returnsNull() {
+        assertNull(ValidationUtil.validateGrinderSetting(1))
+        assertNull(ValidationUtil.validateGrinderSetting(24))
+        assertNull(ValidationUtil.validateGrinderSetting(48))
     }
 
     @Test
-    fun validateBrew_firstError_wins() {
-        // Name error
-        val result = ValidationUtil.validateBrew("", doseGrams = 0.0f, yieldGrams = 10.0f, extractionSeconds = 120)
-        assertNotNull(result)
-        // In the current implementation the first error seen (name) is returned.
+    fun validateGrinderSetting_invalid_returnsError() {
+        assertNotNull(ValidationUtil.validateGrinderSetting(0))
+        assertNotNull(ValidationUtil.validateGrinderSetting(49))
+        assertNotNull(ValidationUtil.validateGrinderSetting(-1))
+    }
+
+    @Test
+    fun validateRoastType_valid_returnsNull() {
+        assertNull(ValidationUtil.validateRoastType("Light"))
+        assertNull(ValidationUtil.validateRoastType("Medium"))
+        assertNull(ValidationUtil.validateRoastType("Dark"))
+    }
+
+    @Test
+    fun validateRoastType_invalid_returnsError() {
+        assertNotNull(ValidationUtil.validateRoastType("light"))
+        assertNotNull(ValidationUtil.validateRoastType(""))
+        assertNotNull(ValidationUtil.validateRoastType("Espresso"))
+    }
+
+    @Test
+    fun validatePortionWeight_valid_returnsNull() {
+        assertNull(ValidationUtil.validatePortionWeight(0.1))
+        assertNull(ValidationUtil.validatePortionWeight(18.0))
+        assertNull(ValidationUtil.validatePortionWeight(100.0))
+    }
+
+    @Test
+    fun validatePortionWeight_invalid_returnsError() {
+        assertNotNull(ValidationUtil.validatePortionWeight(0.0))
+        assertNotNull(ValidationUtil.validatePortionWeight(-5.0))
+    }
+
+    @Test
+    fun validateDescription_null_returnsNull() {
+        assertNull(ValidationUtil.validateDescription(null))
+    }
+
+    @Test
+    fun validateDescription_empty_returnsNull() {
+        assertNull(ValidationUtil.validateDescription(""))
+    }
+
+    @Test
+    fun validateDescription_underLimit_returnsNull() {
+        val text = "A".repeat(500)
+        assertNull(ValidationUtil.validateDescription(text))
+    }
+
+    @Test
+    fun validateDescription_overLimit_returnsError() {
+        val text = "A".repeat(501)
+        assertNotNull(ValidationUtil.validateDescription(text))
+    }
+
+    @Test
+    fun validateBrewEntry_allValid_returnsEmpty() {
+        val entry = BrewEntry(
+            beanName = "Colombia Supremo",
+            roastType = "Medium",
+            grinderSetting = 15,
+            portionWeight = 18.0,
+            createdDate = 1000L,
+            lastModifiedDate = 1000L
+        )
+        val errors = ValidationUtil.validateBrewEntry(entry)
+        assertTrue(errors.isEmpty(), "Expected no validation errors, got: $errors")
+    }
+
+    @Test
+    fun validateBrewEntry_returnsFieldErrors() {
+        val entry = BrewEntry(
+            beanName = "   ",
+            roastType = "InvalidRoast",
+            grinderSetting = 99,
+            portionWeight = -1.0,
+            description = "A".repeat(501),
+            createdDate = 1000L,
+            lastModifiedDate = 1000L
+        )
+        val errors = ValidationUtil.validateBrewEntry(entry)
+        assertEquals(5, errors.size)
+        assertNotNull(errors["beanName"])
+        assertNotNull(errors["roastType"])
+        assertNotNull(errors["grinderSetting"])
+        assertNotNull(errors["portionWeight"])
+        assertNotNull(errors["description"])
     }
 }
