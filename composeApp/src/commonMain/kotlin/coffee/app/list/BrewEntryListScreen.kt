@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.SortOption
+import coffee.app.core.DateFormatUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +49,7 @@ fun BrewEntryListScreen(
                 title = { Text("Brew Entries") },
                 actions = {
                     IconButton(onClick = { isSortExpanded = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort")
+                        Icon(Icons.Default.MoreVert, contentDescription = "Sort")
                     }
                 }
             )
@@ -118,14 +119,8 @@ fun BrewEntryRow(
             Column {
                 Text("${entry.beanOrigin ?: "Unknown"} · ${entry.roastType ?: "Unknown"}")
                 Text("${entry.grinderSetting} · ${entry.portionWeight}g")
-                Text("Created: ${formatDate(entry.createdDate)}")
+                Text("Created: ${DateFormatUtil.formatDate(entry.createdDate)}")
             }
         }
     )
-}
-
-fun formatDate(timestamp: Long): String {
-    val date = java.util.Date(timestamp)
-    val formatter = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
-    return formatter.format(date)
 }

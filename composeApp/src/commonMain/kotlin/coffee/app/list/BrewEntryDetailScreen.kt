@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
+import coffee.app.core.DateFormatUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,7 +154,7 @@ fun BrewEntryDetailScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Text(text = formatDate(entry.createdDate))
+                            Text(text = DateFormatUtil.formatDate(entry.createdDate))
                         }
                         
                         Column {
@@ -162,7 +163,7 @@ fun BrewEntryDetailScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Text(text = formatDate(entry.lastModifiedDate))
+                            Text(text = DateFormatUtil.formatDate(entry.lastModifiedDate))
                         }
                     }
                 }
@@ -183,10 +184,4 @@ fun BrewEntryDetailScreen(
             }
         }
     }
-}
-
-fun formatDate(timestamp: Long): String {
-    val date = java.util.Date(timestamp)
-    val formatter = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
-    return formatter.format(date)
 }
