@@ -43,6 +43,7 @@ fun App() {
             val db = remember { 
                 CoffeeDatabase.getInstance(
                     Room.databaseBuilder(context, CoffeeDatabase::class.java, "coffee-app.db")
+                        .fallbackToDestructiveMigration()
                 )
             }
             val brewRepo = remember { BrewEntryRepository(db.brewEntryDao()) }
