@@ -79,8 +79,8 @@ fun App() {
                         BrewEntryDetailScreen(
                             entry = screen.entry,
                             onBack = { currentScreen.value = Screen.List },
-                            onEdit = { entry ->
-                                currentScreen.value = Screen.Form(entry)
+                            onEdit = {
+                                currentScreen.value = Screen.Form(screen.entry)
                             },
                             onDelete = {
                                 // Delete and go back to list
