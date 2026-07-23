@@ -9,18 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -33,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -47,7 +42,6 @@ fun OriginPickerSheet(
     onDismiss: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-    val origins by viewModel.origins.collectAsState()
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -66,24 +60,21 @@ fun OriginPickerSheet(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
-                if (origins.filter { !it.isCustom }.isEmpty()) {
+                val predefined = state.origins.filter { !it.isCustom }
+                if (predefined.isEmpty()) {
                     Text(
                         text = "No predefined origins available",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(8.dp)
                     )
                 } else {
-                    LazyColumn (
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(origins.filter { !it.isCustom }) { origin ->
-                            OriginItem(origin, onOriginSelected)
-                        }
+                    predefined.forEach { origin ->
+                        OriginItem(origin, onOriginSelected)
                     }
                 }
                 
                 // Divider
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 
                 // Custom Origins section
                 Text(
@@ -92,19 +83,16 @@ fun OriginPickerSheet(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                if (origins.filter { it.isCustom }.isEmpty()) {
+                val custom = state.origins.filter { it.isCustom }
+                if (custom.isEmpty()) {
                     Text(
                         text = "No custom origins yet",
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(8.dp)
                     )
                 } else {
-                    LazyColumn (
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(origins.filter { it.isCustom }) { origin ->
-                            OriginItem(origin, onOriginSelected)
-                        }
+                    custom.forEach { origin ->
+                        OriginItem(origin, onOriginSelected)
                     }
                 }
                 
