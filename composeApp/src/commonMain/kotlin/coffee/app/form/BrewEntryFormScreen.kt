@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import coffee.app.data.database.BrewEntry
 import coffee.app.domain.RoastType
 
 /**
@@ -42,9 +43,15 @@ import coffee.app.domain.RoastType
 @Composable
 fun BrewEntryFormScreen(
     viewModel: BrewEntryFormViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    entryToEdit: BrewEntry? = null
 ) {
     val state by viewModel.state.collectAsState()
+    
+    // Enter edit mode if an entry is provided
+    if (entryToEdit != null && !state.isEditing) {
+        viewModel.enterEditMode(entryToEdit)
+    }
 
     Column(
         modifier = Modifier
@@ -54,7 +61,7 @@ fun BrewEntryFormScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "New Brew Entry",
+            text = if (state.isEditing) "Edit Brew Entry" else "New Brew Entry",
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -145,7 +152,9 @@ fun BrewEntryFormScreen(
 
         // Save button
         Button(
-            onClick = { viewModel.save() },
+            onClick = { 
+                viewModel.save() 
+            },
             enabled = !state.isSaving,
             modifier = Modifier.fillMaxWidth()
         ) {

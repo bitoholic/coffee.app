@@ -39,7 +39,8 @@ import coffee.app.core.DateFormatUtil
 fun BrewEntryListScreen(
     viewModel: BrewEntryListViewModel,
     onNavigateToDetail: (BrewEntry) -> Unit,
-    onNavigateToForm: () -> Unit
+    onNavigateToForm: () -> Unit,
+    onNavigateToEdit: (BrewEntry) -> Unit
 ) {
     var isSortExpanded by remember { mutableStateOf(false) }
     
@@ -91,7 +92,8 @@ fun BrewEntryListScreen(
                 items(viewModel.entries.value) { entry ->
                     BrewEntryRow(
                         entry = entry,
-                        onClick = { onNavigateToDetail(entry) }
+                        onClick = { onNavigateToDetail(entry) },
+                        onEditClick = { onNavigateToEdit(entry) }
                     )
                 }
             }
@@ -102,7 +104,8 @@ fun BrewEntryListScreen(
 @Composable
 fun BrewEntryRow(
     entry: BrewEntry,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onEditClick: () -> Unit
 ) {
     ListItem(
         modifier = Modifier
@@ -120,6 +123,11 @@ fun BrewEntryRow(
                 Text("${entry.beanOrigin ?: "Unknown"} · ${entry.roastType ?: "Unknown"}")
                 Text("${entry.grinderSetting} · ${entry.portionWeight}g")
                 Text("Created: ${DateFormatUtil.formatDate(entry.createdDate)}")
+            }
+        },
+        trailingContent = {
+            IconButton(onClick = onEditClick) {
+                Icon(Icons.Default.Edit, contentDescription = "Edit")
             }
         }
     )

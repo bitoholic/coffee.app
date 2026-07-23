@@ -28,7 +28,9 @@ data class FormState(
     val validationErrors: Map<String, String> = emptyMap(),
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
-    val origins: List<Origin> = emptyList()
+    val origins: List<Origin> = emptyList(),
+    val isEditing: Boolean = false,
+    val originalValues: BrewEntry? = null
 )
 
 /**
@@ -98,6 +100,42 @@ class BrewEntryFormViewModel(
     }
 
     /**
+     * Enters edit mode with the given BrewEntry
+     */
+    fun enterEditMode(entry: BrewEntry) {
+        _state.update {
+            it.copy(
+                beanName = entry.beanName,
+                beanOrigin = entry.beanOrigin ?: "",
+                roastType = RoastType.valueOf(entry.roastType),
+                grinderSetting = entry.grinderSetting.toString(),
+                portionWeight = entry.portionWeight.toString(),
+                description = entry.description ?: "",
+                isEditing = true,
+                originalValues = entry,
+                validationErrors = emptyMap(),
+                saveSuccess = false
+            )
+        }
+    }
+
+    /**
+     * Checks if form state has been modified from original values
+     */
+    fun isDirty(): Boolean {
+        val state = _state.value
+        if (!state.isEditing || state.originalValues == null) return false
+        
+        val original = state.originalValues
+        return state.beanName != original.beanName ||
+                state.beanOrigin != (original.beanOrigin ?: "") ||
+                state.roastType != RoastType.valueOf(original.roastType) ||
+                state.grinderSetting != original.grinderSetting.toString() ||
+                state.portionWeight != original.portionWeight.toString() ||
+                state.description != (original.description ?: "")
+    }
+
+    /**
      * Validates the current form state and persists if valid.
      * Sets validationErrors on failure or saveSuccess on success.
      */
@@ -156,8 +194,9 @@ class BrewEntryFormViewModel(
                 grinderSetting = grinderSetting!!,
                 portionWeight = portionWeight!!,
                 description = currentState.description.ifBlank { null },
-                createdDate = now,
-                lastModifiedDate = now
+                createdDate = if (currentState.isEditing) currentState.originalValues!!.createdDate else now,
+                lastModifiedDate = now,
+                uuid = if (currentState.isEditing) currentState.originalValues!!.uuid else ""
             )
             brewEntryRepository.add(entry)
             _state.update { it.copy(isSaving = false, saveSuccess = true, validationErrors = emptyMap()) }
@@ -166,5 +205,22 @@ class BrewEntryFormViewModel(
 
     fun resetSaveSuccess() {
         _state.update { it.copy(saveSuccess = false) }
+    }
+    
+    fun clearEditState() {
+        _state.update { 
+            it.copy(
+                isEditing = false,
+                originalValues = null,
+                beanName = "",
+                beanOrigin = "",
+                roastType = null,
+                grinderSetting = "",
+                portionWeight = "",
+                description = "",
+                validationErrors = emptyMap(),
+                saveSuccess = false
+            ) 
+        }
     }
 }
