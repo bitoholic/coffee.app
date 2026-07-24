@@ -7,13 +7,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.runBlocking
 
 @Database(
-    entities = [BrewEntry::class, Origin::class],
-    version = 1,
+    entities = [BrewEntry::class, Origin::class, AppPreference::class],
+    version = 2,
     exportSchema = false
 )
 abstract class CoffeeDatabase : RoomDatabase() {
     abstract fun brewEntryDao(): BrewEntryDao
     abstract fun originDao(): OriginDao
+    abstract fun appPreferencesDao(): AppPreferencesDao
 
     companion object {
         private var instance: CoffeeDatabase? = null
