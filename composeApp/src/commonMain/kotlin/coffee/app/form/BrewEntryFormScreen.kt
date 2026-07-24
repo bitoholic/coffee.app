@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -19,11 +21,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,9 +43,6 @@ import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.RoastType
 
-/**
- * Full-screen brew entry form with all fields per spec.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrewEntryFormScreen(
@@ -52,131 +56,149 @@ fun BrewEntryFormScreen(
     if (entryToEdit != null && !state.isEditing) {
         viewModel.enterEditMode(entryToEdit)
     }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text(
-            text = if (state.isEditing) "Edit Brew Entry" else "New Brew Entry",
-            style = MaterialTheme.typography.headlineSmall
-        )
-
-        // Bean Name
-        OutlinedTextField(
-            value = state.beanName,
-            onValueChange = viewModel::onBeanNameChanged,
-            label = { Text("Bean Name *") },
-            isError = state.validationErrors.containsKey("beanName"),
-            supportingText = state.validationErrors["beanName"]?.let {
-                { Text(it, color = MaterialTheme.colorScheme.error) }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        // Bean Origin
-        OriginDropdown(
-            origins = state.origins.map { it.name },
-            selectedOrigin = state.beanOrigin,
-            onOriginSelected = viewModel::onBeanOriginChanged,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Roast Type selector
-        Text("Roast Type *", style = MaterialTheme.typography.labelLarge)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            RoastType.entries.forEach { type ->
-                FilterChip(
-                    selected = state.roastType == type,
-                    onClick = { viewModel.onRoastTypeChanged(type) },
-                    label = { Text(type.name) }
-                )
-            }
-        }
-        state.validationErrors["roastType"]?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
-        // Grinder Setting
-        OutlinedTextField(
-            value = state.grinderSetting,
-            onValueChange = viewModel::onGrinderSettingChanged,
-            label = { Text("Grinder Setting (1–48) *") },
-            isError = state.validationErrors.containsKey("grinderSetting"),
-            supportingText = state.validationErrors["grinderSetting"]?.let {
-                { Text(it, color = MaterialTheme.colorScheme.error) }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        // Portion Weight
-        OutlinedTextField(
-            value = state.portionWeight,
-            onValueChange = viewModel::onPortionWeightChanged,
-            label = { Text("Portion Weight (g) *") },
-            isError = state.validationErrors.containsKey("portionWeight"),
-            supportingText = state.validationErrors["portionWeight"]?.let {
-                { Text(it, color = MaterialTheme.colorScheme.error) }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-
-        // Description
-        OutlinedTextField(
-            value = state.description,
-            onValueChange = viewModel::onDescriptionChanged,
-            label = { Text("Description (optional, max 500 chars)") },
-            isError = state.validationErrors.containsKey("description"),
-            supportingText = state.validationErrors["description"]?.let {
-                { Text(it, color = MaterialTheme.colorScheme.error) }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 5
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Save button
-        Button(
-            onClick = { 
-                viewModel.save() 
-            },
-            enabled = !state.isSaving,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (state.isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .width(20.dp)
-                        .height(20.dp),
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text("Save Brew Entry")
-        }
-
-        // Success feedback
+    
+    // Navigate back on successful save
+    LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
-            Text(
-                text = "Brew entry saved successfully!",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
+            viewModel.resetSaveSuccess()
+            onNavigateBack()
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (state.isEditing) "Edit Brew Entry" else "New Brew Entry") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
             )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Bean Name
+            OutlinedTextField(
+                value = state.beanName,
+                onValueChange = viewModel::onBeanNameChanged,
+                label = { Text("Bean Name *") },
+                isError = state.validationErrors.containsKey("beanName"),
+                supportingText = state.validationErrors["beanName"]?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Bean Origin
+            OriginDropdown(
+                origins = state.origins.map { it.name },
+                selectedOrigin = state.beanOrigin,
+                onOriginSelected = viewModel::onBeanOriginChanged,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // Roast Type selector
+            Text("Roast Type *", style = MaterialTheme.typography.labelLarge)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                RoastType.entries.forEach { type ->
+                    FilterChip(
+                        selected = state.roastType == type,
+                        onClick = { viewModel.onRoastTypeChanged(type) },
+                        label = { Text(type.name) }
+                    )
+                }
+            }
+            state.validationErrors["roastType"]?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            // Grinder Setting
+            OutlinedTextField(
+                value = state.grinderSetting,
+                onValueChange = viewModel::onGrinderSettingChanged,
+                label = { Text("Grinder Setting (1-48) *") },
+                isError = state.validationErrors.containsKey("grinderSetting"),
+                supportingText = state.validationErrors["grinderSetting"]?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Portion Weight
+            OutlinedTextField(
+                value = state.portionWeight,
+                onValueChange = viewModel::onPortionWeightChanged,
+                label = { Text("Portion Weight (grams) *") },
+                isError = state.validationErrors.containsKey("portionWeight"),
+                supportingText = state.validationErrors["portionWeight"]?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            // Description
+            OutlinedTextField(
+                value = state.description,
+                onValueChange = viewModel::onDescriptionChanged,
+                label = { Text("Description (optional)") },
+                isError = state.validationErrors.containsKey("description"),
+                supportingText = state.validationErrors["description"]?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 5
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Save button
+            Button(
+                onClick = { viewModel.save() },
+                enabled = !state.isSaving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .width(20.dp)
+                            .height(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Save Brew Entry")
+            }
+
+            // Validation errors summary
+            if (state.validationErrors.isNotEmpty()) {
+                Text(
+                    text = "Please fix the errors above before saving.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
         }
     }
 }

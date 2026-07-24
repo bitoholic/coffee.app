@@ -7,6 +7,7 @@ import coffee.app.data.database.Origin
 import coffee.app.data.repository.BrewEntryRepository
 import coffee.app.data.repository.OriginRepository
 import coffee.app.domain.RoastType
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -196,7 +197,7 @@ class BrewEntryFormViewModel(
                 description = currentState.description.ifBlank { null },
                 createdDate = if (currentState.isEditing) currentState.originalValues!!.createdDate else now,
                 lastModifiedDate = now,
-                uuid = if (currentState.isEditing) currentState.originalValues!!.uuid else ""
+                uuid = if (currentState.isEditing) currentState.originalValues!!.uuid else UUID.randomUUID().toString()
             )
             brewEntryRepository.add(entry)
             _state.update { it.copy(isSaving = false, saveSuccess = true, validationErrors = emptyMap()) }
