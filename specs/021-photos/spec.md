@@ -1,6 +1,6 @@
 # Feature Specification: Photos & Compact List Layout
 
-**Feature Branch**: `feature/003-photos`
+**Feature Branch**: `feature/021-photos-spec`
 
 **Created**: 2026-07-24
 
