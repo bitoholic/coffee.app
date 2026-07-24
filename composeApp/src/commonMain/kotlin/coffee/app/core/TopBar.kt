@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun BitoholicTopBar(
     title: String,
+    showBack: Boolean = false,
+    onBackClick: () -> Unit = {},
     showSettings: Boolean = false,
     onSettingsClick: () -> Unit = {}
 ) {
@@ -64,6 +67,17 @@ fun BitoholicTopBar(
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+            }
+        },
+        navigationIcon = {
+            if (showBack) {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         },
         actions = {
