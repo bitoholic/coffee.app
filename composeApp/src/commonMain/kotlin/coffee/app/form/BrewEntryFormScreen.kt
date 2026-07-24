@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.compose.BackHandler
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.RoastType
+import coffee.app.core.BitoholicTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,25 +98,12 @@ fun BrewEntryFormScreen(
             onNavigateBack()
         }
     }
-
+    
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (state.isEditing) "Edit Brew Entry" else "New Brew Entry") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (viewModel.isDirty()) {
-                            showDiscardDialog = true
-                        } else {
-                            onNavigateBack()
-                        }
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
+            BitoholicTopBar(
+                title = if (state.isEditing) "Edit Brew Entry" else "New Brew Entry",
+                showSettings = false
             )
         }
     ) { paddingValues ->
