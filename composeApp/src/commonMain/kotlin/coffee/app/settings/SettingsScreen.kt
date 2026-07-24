@@ -22,8 +22,9 @@ fun SettingsScreen(
     ) {
         BitoholicTopBar(
             title = "Settings",
-            showSettings = false,
-            onNavigateBack = onNavigateBack
+            showBack = true,
+            onBackClick = onNavigateBack,
+            showSettings = false
         )
         
         Column(
