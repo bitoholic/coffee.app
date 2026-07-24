@@ -37,8 +37,11 @@ fun App() {
             val context = androidx.compose.ui.platform.LocalContext.current
             val db = remember { 
                 CoffeeDatabase.getInstance(
-                    Room.databaseBuilder(context, CoffeeDatabase::class.java, "coffee-app.db")
-                        .fallbackToDestructiveMigration()
+                    Room.databaseBuilder(
+                        context,
+                        CoffeeDatabase::class.java,
+                        "coffee-app.db"
+                    ).fallbackToDestructiveMigration()
                 )
             }
             val brewRepo = remember { BrewEntryRepository(db.brewEntryDao()) }
@@ -57,6 +60,7 @@ fun App() {
                             currentScreen = Screen.Detail(entry)
                         },
                         onNavigateToForm = {
+                            formViewModel.clearEditState()
                             currentScreen = Screen.Form(null)
                         },
                         onNavigateToEdit = { entry ->
@@ -83,7 +87,10 @@ fun App() {
                     val screen = currentScreen as Screen.Form
                     BrewEntryFormScreen(
                         viewModel = formViewModel,
-                        onNavigateBack = { currentScreen = Screen.List },
+                        onNavigateBack = {
+                            formViewModel.clearEditState()
+                            currentScreen = Screen.List
+                        },
                         entryToEdit = screen.entry
                     )
                 }

@@ -5,6 +5,7 @@ import coffee.app.data.repository.BrewEntryRepository
 import coffee.app.domain.SortOption
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,23 +27,17 @@ class BrewEntryListViewModel(
     private val _currentSortOption = MutableStateFlow(SortOption.CreatedDateDesc)
     val currentSortOption: StateFlow<SortOption> = _currentSortOption.asStateFlow()
     
-    private val _selectedEntry = MutableStateFlow<BrewEntry?>(null)
-    val selectedEntry: StateFlow<BrewEntry?> = _selectedEntry.asStateFlow()
-    
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var collectionJob: Job? = null
     
     init {
-        loadEntries()
+        collectEntries(SortOption.CreatedDateDesc)
     }
     
-    fun loadEntries(sortOption: SortOption? = null) {
-        val sort = sortOption ?: _currentSortOption.value
-        _currentSortOption.value = sort
-        _isLoading.value = true
-        
-        // Collect data from repository based on current sort option
-        // This will automatically re-subscribe when sort changes
-        viewModelScope.launch {
+    private fun collectEntries(sort: SortOption) {
+        collectionJob?.cancel()
+        collectionJob = viewModelScope.launch {
+            _isLoading.value = true
             brewEntryRepository.getAll(sort).collectLatest { entries ->
                 _entries.value = entries
                 _isLoading.value = false
@@ -52,22 +47,11 @@ class BrewEntryListViewModel(
     
     fun setSortOption(sortOption: SortOption) {
         _currentSortOption.value = sortOption
-        loadEntries(sortOption)
-    }
-    
-    fun selectEntry(entry: BrewEntry) {
-        _selectedEntry.value = entry
-    }
-    
-    fun clearSelection() {
-        _selectedEntry.value = null
-    }
-    
-    fun getEntryById(uuid: String): BrewEntry? {
-        return _entries.value.find { it.uuid == uuid }
+        collectEntries(sortOption)
     }
     
     fun onCleared() {
+        collectionJob?.cancel()
         viewModelScope.cancel()
     }
 }
