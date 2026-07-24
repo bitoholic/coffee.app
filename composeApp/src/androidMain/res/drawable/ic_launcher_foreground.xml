@@ -4,15 +4,15 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Coffee bean body (ellipse shape) -->
+    <!-- Coffee bean body (tall ellipse) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M26,54 C26,24 82,24 82,54 C82,84 26,84 26,54 Z"/>
+        android:pathData="M30,54 A24,30 0 1,1 78,54 A24,30 0 1,1 30,54 Z"/>
     <!-- Coffee bean crease (S-curve) -->
     <path
         android:strokeColor="#C8102E"
-        android:strokeWidth="3.5"
+        android:strokeWidth="3"
         android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:pathData="M40,28 Q62,40 54,54 Q46,68 68,80"/>
+        android:pathData="M40,28 Q60,40 54,54 Q48,66 68,80"/>
 </vector>
