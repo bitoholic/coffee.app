@@ -92,6 +92,11 @@ fun BrewEntryDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            // Photo section, if photo exists
+            // photoPath field would be present in real implementation
+            // In actual implementation: show photo preview with tap-to-expand capability
+            Spacer(modifier = Modifier.height(16.dp))
+            
             // Main Details
             Card(
                 modifier = Modifier.fillMaxWidth()
