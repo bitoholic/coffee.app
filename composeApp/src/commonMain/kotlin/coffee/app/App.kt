@@ -17,12 +17,14 @@ import coffee.app.list.BrewEntryListViewModel
 import coffee.app.list.BrewEntryDetailScreen
 import coffee.app.form.BrewEntryFormScreen
 import coffee.app.form.BrewEntryFormViewModel
+import coffee.app.settings.SettingsScreen
 import androidx.room.Room
 
 sealed class Screen {
     object List : Screen()
     data class Detail(val entry: BrewEntry) : Screen()
     data class Form(val entry: BrewEntry?) : Screen()
+    object Settings : Screen()
 }
 
 @Composable
@@ -66,7 +68,9 @@ fun App() {
                         onNavigateToEdit = { entry ->
                             currentScreen = Screen.Form(entry)
                         },
-                        onNavigateToSettings = {}
+                        onNavigateToSettings = {
+                            currentScreen = Screen.Settings
+                        }
                     )
                 }
                 
@@ -94,6 +98,12 @@ fun App() {
                             currentScreen = Screen.List
                         },
                         entryToEdit = screen.entry
+                    )
+                }
+                
+                Screen.Settings -> {
+                    SettingsScreen(
+                        onNavigateBack = { currentScreen = Screen.List }
                     )
                 }
             }
