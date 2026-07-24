@@ -2,15 +2,22 @@ package coffee.app.list
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -31,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.SortOption
@@ -38,7 +47,10 @@ import coffee.app.core.DateFormatUtil
 import coffee.app.core.BitoholicTopBar
 import coffee.app.core.BrandRed
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,45 +111,74 @@ fun BrewEntryListScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(entries) { entry ->
-                    BrewEntryRow(
-                        entry = entry,
-                        onClick = { onNavigateToDetail(entry) },
-                        onEditClick = { onNavigateToEdit(entry) }
-                    )
+                    // Compact two-line list row with photo thumbnail
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToDetail(entry) }
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        // Left: photo thumbnail or placeholder (48dp circle)
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.CameraAlt,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            // Line 1: bold name left, origin/roast right
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = entry.beanName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "${entry.beanOrigin ?: ""} / ${entry.roastType ?: ""}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            // Line 2: short date left, grinder/weight right
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = DateFormatUtil.toShortDate(entry.createdDate),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "${entry.grinderSetting} / ${entry.portionWeight}g",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-}
-
-@Composable
-fun BrewEntryRow(
-    entry: BrewEntry,
-    onClick: () -> Unit,
-    onEditClick: () -> Unit
-) {
-    ListItem(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(8.dp),
-        headlineContent = {
-            Text(
-                text = entry.beanName,
-                style = androidx.compose.material3.MaterialTheme.typography.bodyLarge
-            )
-        },
-        supportingContent = {
-            Column {
-                Text("${entry.beanOrigin ?: "Unknown"} · ${entry.roastType ?: "Unknown"}")
-                Text("${entry.grinderSetting} · ${entry.portionWeight}g")
-                Text("Created: ${DateFormatUtil.formatDate(entry.createdDate)}")
-            }
-        },
-        trailingContent = {
-            IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = "Edit")
-            }
-        }
-    )
 }
