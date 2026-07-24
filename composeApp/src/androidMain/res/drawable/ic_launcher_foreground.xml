@@ -4,19 +4,56 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#C8102E"
-        android:pathData="M30,15h48c10,0 15,5 15,15v48c0,10 -5,15 -15,15h-48c-10,0 -15,-5 -15,-15v-48c0,-10 5,-15 15,-15z"/>
+    <!-- Cup body -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M36,52h-2v-6l2,-2h4l0,6l2,0v3h-2v7h-2v-1c-1,0 -2,1 -2,1zM36,47v3h3v-3z"/>
+        android:pathData="M32,40 L76,40 L70,80 Q68,86 62,86 L46,86 Q40,86 38,80 Z"/>
+    <!-- Cup handle -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M36,65h-2v-6l2,-2h4l0,6l2,0v3h-2v7h-2v-1c-1,0 -2,1 -2,1zM36,60v3h3v-3z"/>
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M74,48 C86,48 86,72 70,72"/>
+    <!-- Steam line 1 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M56,54c0,-4 3,-7 7,-7h1v5h-1c-2,0 -3,1 -3,3v1h5v12h-9v-5h4v-4h-4z"/>
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M42,32 C38,26 48,26 44,20 C40,14 50,14 46,8"/>
+    <!-- Steam line 2 -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M56,67c0,-4 3,-7 7,-7h1v5h-1c-2,0 -3,1 -3,3v1h5v12h-9v-5h4v-4h-4z"/>
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M54,32 C50,26 60,26 56,20 C52,14 62,14 58,8"/>
+    <!-- Steam line 3 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M66,32 C62,26 72,26 68,20 C64,14 74,14 70,8"/>
+    <!-- Binary: "0" ring (left) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M33,92 L39,92 L39,102 L33,102 Z"/>
+    <!-- Binary: "1" bar (left) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M45,92 L45,102"/>
+    <!-- Binary: "1" bar (right) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M57,92 L57,102"/>
+    <!-- Binary: "0" ring (right) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:fillColor="#00000000"
+        android:pathData="M63,92 L69,92 L69,102 L63,102 Z"/>
 </vector>

@@ -1,7 +1,6 @@
 package coffee.app.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,45 +13,46 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        BitoholicTopBar(
-            title = "Settings",
-            showBack = true,
-            onBackClick = onNavigateBack,
-            showSettings = false
-        )
-        
+    Scaffold(
+        topBar = {
+            BitoholicTopBar(
+                title = "Settings",
+                showBack = true,
+                onBackClick = onNavigateBack,
+                showSettings = false
+            )
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 80.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = "Theme",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 16.dp)
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
             )
-            
+
             val themeMode by viewModel.themeMode.collectAsState()
             val themeModes = listOf(ThemeMode.SYSTEM, ThemeMode.LIGHT, ThemeMode.DARK)
-            
+
             SingleChoiceSegmentedButtonRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                themeModes.forEach { mode ->
-                    FilterChip(
+                themeModes.forEachIndexed { index, mode ->
+                    SegmentedButton(
                         selected = themeMode == mode,
                         onClick = { viewModel.setThemeMode(mode) },
-                        label = { Text(getThemeModeLabel(mode)) }
-                    )
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = themeModes.size
+                        )
+                    ) {
+                        Text(getThemeModeLabel(mode))
+                    }
                 }
             }
         }

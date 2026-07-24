@@ -36,6 +36,9 @@ import coffee.app.data.database.BrewEntry
 import coffee.app.domain.SortOption
 import coffee.app.core.DateFormatUtil
 import coffee.app.core.BitoholicTopBar
+import coffee.app.core.BrandRed
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +61,11 @@ fun BrewEntryListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToForm) {
+            FloatingActionButton(
+                onClick = onNavigateToForm,
+                containerColor = BrandRed,
+                contentColor = Color.White
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Brew Entry")
             }
         }
