@@ -24,7 +24,12 @@ Apply the bitoholic brand identity to the coffee.app — custom colour scheme (`
 
 **Performance Goals**: Theme switches instantly (<100ms), preference read on startup is async/non-blocking
 
-**Constraints**: Must work in both light and dark modes. Theme toggle must be readable in both modes.
+**Constraints**: 
+- Settings gear icon ONLY on the main list screen top bar
+- Logo bar (squircle + "bitoholic" text) visible on ALL screens (list, detail, form, settings)
+- Theme toggle uses a segmented button (System / Light / Dark)
+- App icon: steaming cup with binary below it
+- Preferences table structured as key-value for future extensibility
 
 **Mobile Assumptions**: 
 - Android adaptive icon (foreground + background layers)
@@ -89,14 +94,15 @@ composeApp/src/commonTest/kotlin/coffee/app/settings/
 ## Implementation Order
 
 1. **Theme.kt** — Brand colour constants and custom Material 3 colour schemes for light and dark modes
-2. **App.kt** — Update to use custom colour schemes, add logo mark + gear icon in top bar, wire settings navigation
-3. **AppPreferences.kt + AppPreferencesDao.kt** — Room entity and DAO for theme preference storage
-4. **CoffeeDatabase.kt** — Register new entity and DAO
-5. **SettingsViewModel.kt** — State management: read/write theme preference, expose current state
-6. **SettingsScreen.kt** — Three-option radio/segmented control for System/Light/Dark
-7. **App.kt (theme wiring)** — Use stored preference instead of `isSystemInDarkTheme()` only
-8. **SettingsViewModelTest.kt** — Unit tests for preference save/load
-9. **App icon assets** — Generate Android adaptive icon PNGs
-10. **Update build.gradle.kts** — Ensure release signing config (already done)
+2. **TopBar.kt** — Shared composable: squircle logo + "bitoholic" text on the left, optional gear icon on the right. Used by all screens.
+3. **App.kt** — Update to use custom colour schemes, add TopBar to all screens, gear icon only on list screen, wire settings navigation
+4. **AppPreferences.kt + AppPreferencesDao.kt** — Key-value Room entity and DAO for theme preference storage (extensible for future prefs)
+5. **CoffeeDatabase.kt** — Register new entity and DAO
+6. **SettingsViewModel.kt** — State management: read/write theme preference, expose current state
+7. **SettingsScreen.kt** — Segmented button (System / Light / Dark) for theme toggle
+8. **App.kt (theme wiring)** — Use stored preference instead of `isSystemInDarkTheme()` only
+9. **SettingsViewModelTest.kt** — Unit tests for preference save/load
+10. **App icon assets** — Generate Android adaptive icon PNGs (steaming cup + binary below)
+11. **Update build.gradle.kts** — Ensure release signing config (already done)
 
 **Next step**: Generate tasks from this plan.
