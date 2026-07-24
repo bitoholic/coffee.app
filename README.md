@@ -1,8 +1,10 @@
-# coffee.app ☕
+# BitoCoffee ☕
 
-A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, and sort your brew experiments — all stored locally on your device.
+A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, and sort your brew experiments — all branded with the bitoholic identity.
 
 ## Features
+
+![BitoCoffee](https://img.shields.io/badge/version-0.0.2-red?style=flat&color=C8102E)
 
 - **Add brew entries** — Record bean name, origin, roast type, grinder setting, portion weight, and description
 - **14 predefined origins** — Brazil, Colombia, Ethiopia, Kenya, and more seeded out of the box
@@ -11,8 +13,10 @@ A local-first mobile coffee brewing journal built with Compose Multiplatform and
 - **Entry detail** — Full detail view with all saved fields
 - **Edit & Delete** — Edit entries, delete with confirmation dialog
 - **Unsaved changes warning** — Warns before discarding edits on the add/edit form
-- **Dark/Light theme** — Automatically follows your system theme
+- **Dark/Light/System theme** — Toggle via settings screen, persists across restarts
+- **Bitoholic branding** — Custom `#C8102E` colour scheme, logo TopBar, coffee bean app icon
 - **Persistence** — All data stored locally via Room (SQLite), survives app restarts
+- **Signed release APK** — Build with `assembleRelease` for clean installation
 
 ## Tech Stack
 
@@ -71,7 +75,6 @@ composeApp/src/
 
 Planned future enhancements:
 
-- **Branding & Design** — App icon, colour palette refinement, typography, splash screen
 - **Photos** — Attach photos of brew equipment, beans, and results to entries
 - Additional brewing parameters and recipe support
 - Data export/backup
