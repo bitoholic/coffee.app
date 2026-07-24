@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 
 @Database(
     entities = [BrewEntry::class, Origin::class, AppPreference::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class CoffeeDatabase : RoomDatabase() {
