@@ -45,8 +45,8 @@ fun BitoholicTopBar(
                 // Squircle logo with binary
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(BrandRed),
                     contentAlignment = Alignment.Center
                 ) {
@@ -54,9 +54,9 @@ fun BitoholicTopBar(
                         text = "01\n01",
                         color = androidx.compose.ui.graphics.Color.White,
                         fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 12.sp,
+                        lineHeight = 14.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
@@ -64,7 +64,7 @@ fun BitoholicTopBar(
                 Text(
                     text = "bitoholic",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = 24.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
