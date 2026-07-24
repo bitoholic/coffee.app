@@ -103,6 +103,8 @@ fun BrewEntryFormScreen(
         topBar = {
             BitoholicTopBar(
                 title = if (state.isEditing) "Edit Brew Entry" else "New Brew Entry",
+                showBack = true,
+                onBackClick = { if (viewModel.isDirty()) showDiscardDialog = true else onNavigateBack() },
                 showSettings = false
             )
         }

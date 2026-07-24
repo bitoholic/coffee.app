@@ -72,6 +72,8 @@ fun BrewEntryDetailScreen(
         topBar = {
             BitoholicTopBar(
                 title = entry.beanName,
+                showBack = true,
+                onBackClick = onBack,
                 showSettings = false
             )
         }
