@@ -5,6 +5,7 @@ A local-first mobile coffee brewing journal built with Compose Multiplatform and
 ## Features
 
 ![BitoCoffee](https://img.shields.io/badge/version-0.0.2-red?style=flat&color=C8102E)
+![CI](https://github.com/bitoholic/coffee.app/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 - **Add brew entries** — Record bean name, origin, roast type, grinder setting, portion weight, and description
 - **14 predefined origins** — Brazil, Colombia, Ethiopia, Kenya, and more seeded out of the box
