@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,6 +37,8 @@ import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.core.DateFormatUtil
 import coffee.app.core.BitoholicTopBar
+import coffee.app.core.BrandRed
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +59,11 @@ fun BrewEntryDetailScreen(
                 Button(onClick = {
                     onDelete()
                     showDeleteConfirmation = false
-                }) {
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandRed,
+                    contentColor = Color.White
+                )) {
                     Text("Delete")
                 }
             },
@@ -197,7 +204,13 @@ fun BrewEntryDetailScreen(
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.End
             ) {
-                Button(onClick = { showDeleteConfirmation = true }) {
+                Button(
+                    onClick = { showDeleteConfirmation = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = BrandRed,
+                        contentColor = Color.White
+                    )
+                ) {
                     Text("Delete")
                 }
             }
