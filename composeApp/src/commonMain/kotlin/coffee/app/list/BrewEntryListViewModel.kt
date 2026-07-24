@@ -54,4 +54,10 @@ class BrewEntryListViewModel(
         collectionJob?.cancel()
         viewModelScope.cancel()
     }
+    
+    fun deleteEntry(uuid: String) {
+        viewModelScope.launch {
+            brewEntryRepository.delete(uuid)
+        }
+    }
 }
