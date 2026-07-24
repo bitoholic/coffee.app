@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -28,6 +29,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.RoastType
 
@@ -57,6 +60,36 @@ fun BrewEntryFormScreen(
         viewModel.enterEditMode(entryToEdit)
     }
     
+    var showDiscardDialog by remember { mutableStateOf(false) }
+    
+    // Intercept Android system back button
+    BackHandler(enabled = viewModel.isDirty()) {
+        showDiscardDialog = true
+    }
+    
+    // Discard changes confirmation dialog
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard changes?") },
+            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    viewModel.clearEditState()
+                    onNavigateBack()
+                }) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text("Keep editing")
+                }
+            }
+        )
+    }
+    
     // Navigate back on successful save
     LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
@@ -70,7 +103,13 @@ fun BrewEntryFormScreen(
             TopAppBar(
                 title = { Text(if (state.isEditing) "Edit Brew Entry" else "New Brew Entry") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        if (viewModel.isDirty()) {
+                            showDiscardDialog = true
+                        } else {
+                            onNavigateBack()
+                        }
+                    }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"

@@ -121,19 +121,30 @@ class BrewEntryFormViewModel(
     }
 
     /**
-     * Checks if form state has been modified from original values
+     * Checks if form state has been modified.
+     * For add mode: dirty if any field has been filled in.
+     * For edit mode: dirty if any field differs from original values.
      */
     fun isDirty(): Boolean {
         val state = _state.value
-        if (!state.isEditing || state.originalValues == null) return false
         
-        val original = state.originalValues
-        return state.beanName != original.beanName ||
-                state.beanOrigin != (original.beanOrigin ?: "") ||
-                state.roastType != RoastType.valueOf(original.roastType) ||
-                state.grinderSetting != original.grinderSetting.toString() ||
-                state.portionWeight != original.portionWeight.toString() ||
-                state.description != (original.description ?: "")
+        if (state.isEditing && state.originalValues != null) {
+            val original = state.originalValues
+            return state.beanName != original.beanName ||
+                    state.beanOrigin != (original.beanOrigin ?: "") ||
+                    state.roastType != RoastType.valueOf(original.roastType) ||
+                    state.grinderSetting != original.grinderSetting.toString() ||
+                    state.portionWeight != original.portionWeight.toString() ||
+                    state.description != (original.description ?: "")
+        }
+        
+        // Add mode: dirty if user has entered anything
+        return state.beanName.isNotBlank() ||
+                state.beanOrigin.isNotBlank() ||
+                state.roastType != null ||
+                state.grinderSetting.isNotBlank() ||
+                state.portionWeight.isNotBlank() ||
+                state.description.isNotBlank()
     }
 
     /**
