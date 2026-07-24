@@ -11,9 +11,15 @@ val BrandRedDark = Color(0xFFB71C1C)
 val LightColorScheme = lightColorScheme(
     primary = BrandRed,
     onPrimary = Color.White,
+<<<<<<< HEAD
     primaryContainer = Color(0xFFFFDAD6),
     onPrimaryContainer = Color(0xFF410002),
     secondary = Color(0xFF775653),
+=======
+    primaryContainer = BrandRed,
+    onPrimaryContainer = Color.White,
+    secondary = Color(0xFFC8102E),
+>>>>>>> origin/develop
     onSecondary = Color.White,
     background = Color(0xFFF5F5F5),
     onBackground = Color(0xFF1A1A1A),
@@ -28,8 +34,13 @@ val LightColorScheme = lightColorScheme(
 val DarkColorScheme = darkColorScheme(
     primary = BrandRed,
     onPrimary = Color.White,
+<<<<<<< HEAD
     primaryContainer = Color(0xFF93000A),
     onPrimaryContainer = Color(0xFFFFDAD6),
+=======
+    primaryContainer = BrandRed,
+    onPrimaryContainer = Color.White,
+>>>>>>> origin/develop
     secondary = Color(0xFFE7BDB9),
     onSecondary = Color(0xFF442928),
     background = Color(0xFF121212),

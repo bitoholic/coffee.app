@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Coffee bean body (tall ellipse) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,54 A24,30 0 1,1 78,54 A24,30 0 1,1 30,54 Z"/>
+    <!-- Coffee bean crease (S-curve) -->
+    <path
+        android:strokeColor="#C8102E"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M40,28 Q60,40 54,54 Q48,66 68,80"/>
+</vector>
