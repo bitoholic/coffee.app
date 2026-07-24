@@ -80,6 +80,22 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("/opt/data/home/bitoholic.keystore")
+            storePassword = "bitoholic"
+            keyAlias = "bitoholic"
+            keyPassword = "bitoholic"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
