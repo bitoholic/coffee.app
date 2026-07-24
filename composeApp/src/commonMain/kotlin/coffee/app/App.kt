@@ -65,7 +65,8 @@ fun App() {
                         },
                         onNavigateToEdit = { entry ->
                             currentScreen = Screen.Form(entry)
-                        }
+                        },
+                        onNavigateToSettings = {}
                     )
                 }
                 
