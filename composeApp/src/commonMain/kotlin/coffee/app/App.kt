@@ -78,6 +78,7 @@ fun App() {
                             currentScreen = Screen.Form(screen.entry)
                         },
                         onDelete = {
+                            listViewModel.deleteEntry(screen.entry.uuid)
                             currentScreen = Screen.List
                         }
                     )
