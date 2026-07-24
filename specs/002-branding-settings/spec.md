@@ -79,6 +79,8 @@ As a user, I want to choose between light theme, dark theme, or following my sys
 - **FR-008**: The settings screen MUST be accessible from all main screens (list, detail, form).
 - **FR-009**: The settings screen MUST have a back navigation to return to the previous screen.
 - **FR-010**: Future settings MUST be addable to the settings screen without structural changes.
+- **FR-011**: The app MUST be signed with a release keystore before distribution to avoid untrusted-app installation warnings.
+- **FR-012**: The release build MUST produce a signed APK via `./gradlew :composeApp:assembleRelease`.
 
 ### Constitution Alignment *(mandatory)*
 
@@ -107,3 +109,5 @@ As a user, I want to choose between light theme, dark theme, or following my sys
 - The gear icon can use Material Icons's built-in `Icons.Default.Settings`.
 - The settings screen starts simple with just the theme toggle but is designed to accommodate future additions.
 - Preference storage uses a new Room entity `AppPreferences` with a single row.
+- Release signing uses a local keystore at `/opt/data/home/bitoholic.keystore` with alias `bitoholic`. The signing config is defined in `composeApp/build.gradle.kts`.
+- The debug APK (`assembleDebug`) remains unsinged with the default debug certificate and will still show untrusted warnings. Only `assembleRelease` produces a cleanly signed APK.
