@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.SortOption
 import coffee.app.core.DateFormatUtil
+import coffee.app.core.BitoholicTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,20 +43,18 @@ fun BrewEntryListScreen(
     viewModel: BrewEntryListViewModel,
     onNavigateToDetail: (BrewEntry) -> Unit,
     onNavigateToForm: () -> Unit,
-    onNavigateToEdit: (BrewEntry) -> Unit
+    onNavigateToEdit: (BrewEntry) -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     var isSortExpanded by remember { mutableStateOf(false) }
     val entries by viewModel.entries.collectAsState()
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Brew Entries") },
-                actions = {
-                    IconButton(onClick = { isSortExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Sort")
-                    }
-                }
+            BitoholicTopBar(
+                title = "Brews",
+                showSettings = true,
+                onSettingsClick = onNavigateToSettings
             )
         },
         floatingActionButton = {

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coffee.app.data.database.BrewEntry
 import coffee.app.core.DateFormatUtil
+import coffee.app.core.BitoholicTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,21 +70,9 @@ fun BrewEntryDetailScreen(
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Brew Entry Detail") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
-                    }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                    }
-                }
+            BitoholicTopBar(
+                title = entry.beanName,
+                showSettings = false
             )
         }
     ) { paddingValues ->
