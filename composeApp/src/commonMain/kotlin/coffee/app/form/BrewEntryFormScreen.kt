@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +47,8 @@ import androidx.activity.compose.BackHandler
 import coffee.app.data.database.BrewEntry
 import coffee.app.domain.RoastType
 import coffee.app.core.BitoholicTopBar
+import coffee.app.core.BrandRed
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -206,7 +209,11 @@ fun BrewEntryFormScreen(
             Button(
                 onClick = { viewModel.save() },
                 enabled = !state.isSaving,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandRed,
+                    contentColor = Color.White
+                )
             ) {
                 if (state.isSaving) {
                     CircularProgressIndicator(
