@@ -24,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ fun BrewEntryListScreen(
     onNavigateToEdit: (BrewEntry) -> Unit
 ) {
     var isSortExpanded by remember { mutableStateOf(false) }
+    val entries by viewModel.entries.collectAsState()
     
     Scaffold(
         topBar = {
@@ -90,7 +92,7 @@ fun BrewEntryListScreen(
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(viewModel.entries.value) { entry ->
+                items(entries) { entry ->
                     BrewEntryRow(
                         entry = entry,
                         onClick = { onNavigateToDetail(entry) },
