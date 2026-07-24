@@ -3,11 +3,11 @@ package coffee.app
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.isSystemInDarkTheme
-import coffee.app.core.DarkColorScheme
-import coffee.app.core.LightColorScheme
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.CoffeeDatabase
 import coffee.app.data.repository.BrewEntryRepository
@@ -18,7 +18,9 @@ import coffee.app.list.BrewEntryDetailScreen
 import coffee.app.form.BrewEntryFormScreen
 import coffee.app.form.BrewEntryFormViewModel
 import coffee.app.settings.SettingsScreen
+import coffee.app.settings.SettingsViewModel
 import androidx.room.Room
+import coffee.app.settings.ThemeMode
 
 sealed class Screen {
     object List : Screen()
@@ -29,23 +31,35 @@ sealed class Screen {
 
 @Composable
 fun App() {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val db = remember { 
+        CoffeeDatabase.getInstance(
+            Room.databaseBuilder(
+                context.applicationContext,
+                CoffeeDatabase::class.java,
+                "coffee-app.db"
+            )
+        )
+    }
+    
+    // Create SettingsViewModel in App.kt
+    val settingsViewModel = remember { SettingsViewModel(db.appPreferencesDao()) }
+    val themeMode by settingsViewModel.themeMode.collectAsState()
+
+    // Determine if dark mode should be applied
+    val isDarkTheme = when (themeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+    }
+
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColorScheme else LightColorScheme
+        colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            val db = remember { 
-                CoffeeDatabase.getInstance(
-                    Room.databaseBuilder(
-                        context.applicationContext,
-                        CoffeeDatabase::class.java,
-                        "coffee-app.db"
-                    )
-                )
-            }
             val brewRepo = remember { BrewEntryRepository(db.brewEntryDao()) }
             val originRepo = remember { OriginRepository(db.originDao()) }
             
@@ -103,6 +117,7 @@ fun App() {
                 
                 Screen.Settings -> {
                     SettingsScreen(
+                        viewModel = settingsViewModel,
                         onNavigateBack = { currentScreen = Screen.List }
                     )
                 }
