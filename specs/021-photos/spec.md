@@ -14,17 +14,20 @@
 
 As a user, I want to attach photos (of beans, equipment, brew results) to my brew entries so I can visually reference what I used.
 
-**Why this priority**: This is the primary ask — photos add significant value to the brewing memory use case.
+**Why this priority**: This is the primary ask — photos add significant visual reference to brewing notes.
 
-**Independent Test**: Can be tested by adding a new entry, attaching a photo, saving, and seeing the photo on the detail screen. Then reopening the app and confirming the photo persists.
+**Independent Test**: Add a new entry, attach a photo via gallery, save, reopen, confirm photo persists.
 
 **Acceptance Scenarios**:
 
-1. **Given** I am on the add/edit entry form, **When** I tap a "Add Photo" button, **Then** the device's image picker opens.
-2. **Given** I have selected an image, **When** the image is attached, **Then** a thumbnail preview appears on the form.
-3. **Given** an entry has a photo, **When** I view the entry detail screen, **Then** the photo is displayed.
-4. **Given** an entry has a photo, **When** I close and reopen the app, **Then** the photo is still attached.
-5. **Given** I am editing an entry with a photo, **When** I tap "Remove Photo", **Then** the photo is removed.
+1. **Given** I am on the add/edit entry form, **When** I tap "Add Photo", **Then** I can choose between gallery picker or camera.
+2. **Given** I select an image from gallery, **When** it's attached, **Then** a thumbnail preview appears on the form.
+3. **Given** I take a photo with the camera, **When** it's attached, **Then** a thumbnail preview appears on the form.
+4. **Given** an entry has a photo, **When** I view the detail screen, **Then** a thumbnail is displayed that I can tap to expand.
+5. **Given** I tap the expanded photo, **When** viewing it fullscreen, **Then** it's not zoomable — tap again or back to dismiss.
+6. **Given** I close and reopen the app, **When** viewing an entry with a photo, **Then** the photo is still there.
+7. **Given** I edit an entry with a photo, **When** I tap "Remove Photo", **Then** the photo is removed.
+8. **Given** an entry has no photo, **When** viewed on the list, **Then** a default placeholder icon is shown instead.
 
 ---
 
@@ -56,16 +59,16 @@ As a user, I want the entry list to be more compact so I can see more entries at
 
 ### Functional Requirements
 
-- **FR-001**: The app MUST allow attaching one photo per brew entry via the device's image picker (gallery).
-- **FR-002**: Photos MUST be stored as local files and referenced by file path in the database (no blob storage).
+- **FR-001**: The app MUST allow attaching one photo per brew entry via gallery OR camera.
+- **FR-002**: Photos MUST be stored as local compressed files (max 1920px, <500KB) referenced by file path.
 - **FR-003**: The BrewEntry table MUST have a nullable `photoPath` column.
-- **FR-004**: Photos MUST be displayed on the entry detail screen at an appropriate size.
-- **FR-005**: A small photo thumbnail MUST appear on the list row when a photo is attached.
-- **FR-006**: The entry list row MUST show two lines: name + origin/roast on line 1, date + grinder/weight on line 2.
+- **FR-004**: The photo MUST be displayed as a thumbnail on the detail screen, tappable to expand to fullscreen (not zoomable).
+- **FR-005**: A small photo thumbnail MUST appear on the list row when a photo is attached. A placeholder icon for entries without photos.
+- **FR-006**: The entry list row MUST show two lines: bold name + origin/roast on line 1, normal date + grinder/weight on line 2.
 - **FR-007**: The date on the list MUST be in short format (e.g., "24 Jul") without the "Created" prefix.
-- **FR-008**: Photo files MUST be stored in the app's private internal storage directory.
+- **FR-008**: Photo files MUST be stored in the app's private internal storage directory (`filesDir/photos/`).
 - **FR-009**: When an entry is deleted, its associated photo file MUST also be deleted.
-- **FR-010**: The app MUST handle permission denial for storage gracefully.
+- **FR-010**: The app MUST handle permission denial for camera/storage gracefully.
 
 ### Constitution Alignment *(mandatory)*
 
