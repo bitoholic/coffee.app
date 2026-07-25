@@ -3,6 +3,8 @@ package coffee.app.list
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,7 +63,6 @@ import coffee.app.core.DateFormatUtil
 import coffee.app.core.PhotoManager
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhotoDao
-import kotlin.math.abs
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.PaddingValues
 
@@ -100,7 +101,7 @@ fun BrewEntryDetailScreen(
                 .fillMaxSize()
                 .background(Color.Black)
                 .pointerInput(Unit) {
-                    detectTransformGestures { centroid, pan, zoom, _ ->
+                    detectTransformGestures { _, pan, zoom, _ ->
                         val newScale = (scale * zoom).coerceIn(1f, 5f)
                         if (newScale > 1.01f) {
                             // Zoomed in: pan the photo, clamp to bounds
@@ -109,16 +110,22 @@ fun BrewEntryDetailScreen(
                             val halfH = (photoBitmaps[fullscreenIndex]?.height?.toFloat() ?: 0f) * (scale - 1f) / 2f
                             offsetX = (offsetX + pan.x).coerceIn(-halfW, halfW)
                             offsetY = (offsetY + pan.y).coerceIn(-halfH, halfH)
-                        } else if (abs(pan.x) > abs(pan.y) && abs(pan.x) > 100f && photoBitmaps.size > 1) {
-                            // At 1x zoom, horizontal drag: switch photos
-                            val direction = if (pan.x < 0) 1 else -1
-                            val newIndex = (fullscreenIndex + direction).coerceIn(0, photoBitmaps.size - 1)
-                            if (newIndex != fullscreenIndex) fullscreenIndex = newIndex
                         }
                     }
                 }
-                .clickable { 
-                    if (scale <= 1.01f) showPhotoFullscreen = false
+                .pointerInput(fullscreenIndex) {
+                    detectHorizontalDragGestures { _, dragAmount ->
+                        if (photoBitmaps.size > 1 && scale <= 1.01f) {
+                            if (dragAmount > 200f && fullscreenIndex > 0) {
+                                fullscreenIndex--
+                            } else if (dragAmount < -200f && fullscreenIndex < photoBitmaps.size - 1) {
+                                fullscreenIndex++
+                            }
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures { showPhotoFullscreen = false }
                 },
             contentAlignment = Alignment.Center
         ) {
