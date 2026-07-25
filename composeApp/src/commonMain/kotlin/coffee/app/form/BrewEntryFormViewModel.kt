@@ -211,7 +211,6 @@ class BrewEntryFormViewModel(
                 grinderSetting = grinderSetting!!,
                 portionWeight = portionWeight!!,
                 description = currentState.description.ifBlank { null },
-                photoPath = null,
                 createdDate = if (currentState.isEditing) currentState.originalValues!!.createdDate else now,
                 lastModifiedDate = now,
                 uuid = entryUuid
