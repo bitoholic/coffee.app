@@ -3,6 +3,8 @@ package coffee.app.form
 import coffee.app.core.DateFormatUtil
 import coffee.app.core.ValidationUtil
 import coffee.app.data.database.BrewEntry
+import coffee.app.data.database.EntryPhoto
+import coffee.app.data.database.EntryPhotoDao
 import coffee.app.data.database.Origin
 import coffee.app.data.repository.BrewEntryRepository
 import coffee.app.data.repository.OriginRepository
@@ -23,18 +25,20 @@ data class FormState(
     val grinderSetting: String = "",
     val portionWeight: String = "",
     val description: String = "",
-    val photoPath: String? = null,
+    val photos: List<String> = emptyList(),
     val validationErrors: Map<String, String> = emptyMap(),
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
     val origins: List<Origin> = emptyList(),
     val isEditing: Boolean = false,
-    val originalValues: BrewEntry? = null
+    val originalValues: BrewEntry? = null,
+    val originalPhotos: List<String> = emptyList()
 )
 
 class BrewEntryFormViewModel(
     private val brewEntryRepository: BrewEntryRepository,
     private val originRepository: OriginRepository,
+    private val entryPhotoDao: EntryPhotoDao,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
     private val _state = MutableStateFlow(FormState())
@@ -92,11 +96,28 @@ class BrewEntryFormViewModel(
         }
     }
 
-    fun onPhotoPathChanged(path: String?) {
-        // Deprecated since we now support multiple photos
+    fun addPhoto(path: String) {
+        val current = _state.value.photos
+        if (current.size < 10) {
+            _state.update { it.copy(photos = current + path) }
+        }
+    }
+
+    fun removePhoto(index: Int) {
+        val current = _state.value.photos.toMutableList()
+        if (index in current.indices) {
+            current.removeAt(index)
+            _state.update { it.copy(photos = current) }
+        }
     }
 
     fun enterEditMode(entry: BrewEntry) {
+        var existingPhotos = emptyList<String>()
+        coroutineScope.launch {
+            entryPhotoDao.getPhotosForEntry(entry.uuid).collect { entryPhotos ->
+                existingPhotos = entryPhotos.map { it.photoPath }
+            }
+        }
         _state.update {
             it.copy(
                 beanName = entry.beanName,
@@ -105,7 +126,8 @@ class BrewEntryFormViewModel(
                 grinderSetting = entry.grinderSetting.toString(),
                 portionWeight = entry.portionWeight.toString(),
                 description = entry.description ?: "",
-                photoPath = entry.photoPath,
+                photos = existingPhotos,
+                originalPhotos = existingPhotos,
                 isEditing = true,
                 originalValues = entry,
                 validationErrors = emptyMap(),
@@ -116,7 +138,6 @@ class BrewEntryFormViewModel(
 
     fun isDirty(): Boolean {
         val state = _state.value
-        
         if (state.isEditing && state.originalValues != null) {
             val original = state.originalValues
             return state.beanName != original.beanName ||
@@ -125,16 +146,15 @@ class BrewEntryFormViewModel(
                     state.grinderSetting != original.grinderSetting.toString() ||
                     state.portionWeight != original.portionWeight.toString() ||
                     state.description != (original.description ?: "") ||
-                    state.photoPath != original.photoPath
+                    state.photos != state.originalPhotos
         }
-        
         return state.beanName.isNotBlank() ||
                 state.beanOrigin.isNotBlank() ||
                 state.roastType != null ||
                 state.grinderSetting.isNotBlank() ||
                 state.portionWeight.isNotBlank() ||
                 state.description.isNotBlank() ||
-                state.photoPath != null
+                state.photos.isNotEmpty()
     }
 
     fun save() {
@@ -183,6 +203,7 @@ class BrewEntryFormViewModel(
 
         coroutineScope.launch {
             val now = DateFormatUtil.nowMillis()
+            val entryUuid = if (currentState.isEditing) currentState.originalValues!!.uuid else UUID.randomUUID().toString()
             val entry = BrewEntry(
                 beanName = currentState.beanName.trim(),
                 beanOrigin = currentState.beanOrigin.ifBlank { null },
@@ -190,12 +211,19 @@ class BrewEntryFormViewModel(
                 grinderSetting = grinderSetting!!,
                 portionWeight = portionWeight!!,
                 description = currentState.description.ifBlank { null },
-                photoPath = currentState.photoPath,
+                photoPath = null,
                 createdDate = if (currentState.isEditing) currentState.originalValues!!.createdDate else now,
                 lastModifiedDate = now,
-                uuid = if (currentState.isEditing) currentState.originalValues!!.uuid else UUID.randomUUID().toString()
+                uuid = entryUuid
             )
             brewEntryRepository.add(entry)
+
+            // Replace all photos for this entry
+            entryPhotoDao.deleteByEntryUuid(entryUuid)
+            currentState.photos.forEachIndexed { index, path ->
+                entryPhotoDao.insert(EntryPhoto(entryUuid = entryUuid, photoPath = path, sortOrder = index))
+            }
+
             _state.update { it.copy(isSaving = false, saveSuccess = true, validationErrors = emptyMap()) }
         }
     }
@@ -209,13 +237,14 @@ class BrewEntryFormViewModel(
             it.copy(
                 isEditing = false,
                 originalValues = null,
+                originalPhotos = emptyList(),
                 beanName = "",
                 beanOrigin = "",
                 roastType = null,
                 grinderSetting = "",
                 portionWeight = "",
                 description = "",
-                photoPath = null,
+                photos = emptyList(),
                 validationErrors = emptyMap(),
                 saveSuccess = false
             ) 
