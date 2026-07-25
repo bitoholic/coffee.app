@@ -61,6 +61,7 @@ import coffee.app.core.DateFormatUtil
 import coffee.app.core.PhotoManager
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhotoDao
+import kotlin.math.abs
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.PaddingValues
 
@@ -86,8 +87,6 @@ fun BrewEntryDetailScreen(
         var scale by remember { mutableFloatStateOf(1f) }
         var offsetX by remember { mutableFloatStateOf(0f) }
         var offsetY by remember { mutableFloatStateOf(0f) }
-        var maxOffsetX by remember { mutableFloatStateOf(0f) }
-        var maxOffsetY by remember { mutableFloatStateOf(0f) }
         
         // Reset zoom/pan when switching photos
         LaunchedEffect(fullscreenIndex) {
@@ -101,42 +100,21 @@ fun BrewEntryDetailScreen(
                 .fillMaxSize()
                 .background(Color.Black)
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        // Only allow swipe to switch photos when at 1x zoom
-                        val isAtZoomOne = scale <= 1.01f
-                        
-                        if (isAtZoomOne && photoBitmaps.size > 1) {
-                            // Handle swipe to switch photos
-                            if (pan.x > 50f && fullscreenIndex < photoBitmaps.size - 1) {
-                                fullscreenIndex++
-                                scale = 1f
-                                offsetX = 0f
-                                offsetY = 0f
-                            } else if (pan.x < -50f && fullscreenIndex > 0) {
-                                fullscreenIndex--
-                                scale = 1f
-                                offsetX = 0f
-                                offsetY = 0f
-                            } else {
-                                // Allow panning when swiping too little
-                                scale = (scale * zoom).coerceIn(1f, 5f)
-                                offsetX += pan.x
-                                offsetY += pan.y
-                            }
-                        } else {
-                            // When zoomed in, only allow panning
-                            scale = (scale * zoom).coerceIn(1f, 5f)
-                            offsetX += pan.x
-                            offsetY += pan.y
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        val newScale = (scale * zoom).coerceIn(1f, 5f)
+                        if (newScale > 1.01f) {
+                            // Zoomed in: pan the photo, clamp to bounds
+                            scale = newScale
+                            val halfW = (photoBitmaps[fullscreenIndex]?.width?.toFloat() ?: 0f) * (scale - 1f) / 2f
+                            val halfH = (photoBitmaps[fullscreenIndex]?.height?.toFloat() ?: 0f) * (scale - 1f) / 2f
+                            offsetX = (offsetX + pan.x).coerceIn(-halfW, halfW)
+                            offsetY = (offsetY + pan.y).coerceIn(-halfH, halfH)
+                        } else if (abs(pan.x) > abs(pan.y) && abs(pan.x) > 100f && photoBitmaps.size > 1) {
+                            // At 1x zoom, horizontal drag: switch photos
+                            val direction = if (pan.x < 0) 1 else -1
+                            val newIndex = (fullscreenIndex + direction).coerceIn(0, photoBitmaps.size - 1)
+                            if (newIndex != fullscreenIndex) fullscreenIndex = newIndex
                         }
-                        
-                        // Calculate max offsets for boundaries
-                        maxOffsetX = (photoBitmaps[fullscreenIndex]?.width?.toFloat() ?: 0f) * (scale - 1f) / 2f
-                        maxOffsetY = (photoBitmaps[fullscreenIndex]?.height?.toFloat() ?: 0f) * (scale - 1f) / 2f
-                        
-                        // Constrain panning to prevent going out of bounds
-                        offsetX = offsetX.coerceIn(-maxOffsetX, maxOffsetX)
-                        offsetY = offsetY.coerceIn(-maxOffsetY, maxOffsetY)
                     }
                 }
                 .clickable { 

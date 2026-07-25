@@ -110,32 +110,41 @@ fun BrewEntryListScreen(
             // Sort + Search bar
             Box {
                 if (isSearchExpanded) {
-                    // Search mode: sort button + text field + close
+                    // Search mode: sort button + text field + close, all in one row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = currentSort.displayName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            maxLines = 1,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
+                        TextButton(
+                            onClick = { isSortExpanded = true },
+                            modifier = Modifier
+                        ) {
+                            Text(
+                                text = currentSort.displayName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1
+                            )
+                        }
                         TextField(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(1f, fill = false)
                                 .height(40.dp),
                             singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurface
+                            ),
                             colors = TextFieldDefaults.colors(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent
+                                focusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
