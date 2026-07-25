@@ -61,11 +61,13 @@ import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhoto
 import coffee.app.data.database.EntryPhotoDao
 import coffee.app.domain.SortOption
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrewEntryListScreen(
     viewModel: BrewEntryListViewModel,
+    entryPhotoDao: EntryPhotoDao,
     onNavigateToDetail: (BrewEntry) -> Unit,
     onNavigateToForm: () -> Unit,
     onNavigateToEdit: (BrewEntry) -> Unit,
@@ -224,16 +226,58 @@ fun BrewEntryListScreen(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
                             ) {
-                                // Show placeholder icon — photo loading TBD for list
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "No photo",
-                                    tint = BrandRed,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                // Load first photo thumbnail using LaunchedEffect and a mutableStateOf
+                                var firstPhotoPath by remember { mutableStateOf<String?>(null) }
+                                LaunchedEffect(entry.uuid) {
+                                    entryPhotoDao.getPhotosForEntry(entry.uuid).first().let { entryPhotos ->
+                                        firstPhotoPath = entryPhotos.firstOrNull()?.photoPath
+                                    }
+                                }
+                                    
+                                // Load and display the photo if available
+                                firstPhotoPath?.let { path ->
+                                    val photoManager = remember { PhotoManager(context) }
+                                    val bitmap = photoManager.loadPhoto(path)
+                                    bitmap?.let {
+                                        Image(
+                                            bitmap = it.asImageBitmap(),
+                                            contentDescription = "Entry photo thumbnail",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } ?: run {
+                                        // Fallback to placeholder if photo loading failed
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = "No photo",
+                                                tint = BrandRed,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                        }
+                                    }
+                                } ?: run {
+                                    // No photo yet - show placeholder
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "No photo",
+                                            tint = BrandRed,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
                             }
                             
                             Spacer(modifier = Modifier.width(12.dp))

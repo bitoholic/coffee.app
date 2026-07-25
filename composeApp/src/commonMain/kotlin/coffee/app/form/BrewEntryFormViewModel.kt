@@ -15,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -112,27 +113,24 @@ class BrewEntryFormViewModel(
     }
 
     fun enterEditMode(entry: BrewEntry) {
-        var existingPhotos = emptyList<String>()
         coroutineScope.launch {
-            entryPhotoDao.getPhotosForEntry(entry.uuid).collect { entryPhotos ->
-                existingPhotos = entryPhotos.map { it.photoPath }
+            val existingPhotos = entryPhotoDao.getPhotosForEntry(entry.uuid).first().map { it.photoPath }
+            _state.update {
+                it.copy(
+                    beanName = entry.beanName,
+                    beanOrigin = entry.beanOrigin ?: "",
+                    roastType = RoastType.valueOf(entry.roastType),
+                    grinderSetting = entry.grinderSetting.toString(),
+                    portionWeight = entry.portionWeight.toString(),
+                    description = entry.description ?: "",
+                    photos = existingPhotos,
+                    originalPhotos = existingPhotos,
+                    isEditing = true,
+                    originalValues = entry,
+                    validationErrors = emptyMap(),
+                    saveSuccess = false
+                )
             }
-        }
-        _state.update {
-            it.copy(
-                beanName = entry.beanName,
-                beanOrigin = entry.beanOrigin ?: "",
-                roastType = RoastType.valueOf(entry.roastType),
-                grinderSetting = entry.grinderSetting.toString(),
-                portionWeight = entry.portionWeight.toString(),
-                description = entry.description ?: "",
-                photos = existingPhotos,
-                originalPhotos = existingPhotos,
-                isEditing = true,
-                originalValues = entry,
-                validationErrors = emptyMap(),
-                saveSuccess = false
-            )
         }
     }
 
