@@ -29,10 +29,13 @@ open class BrewEntryRepository(
     open fun getAll(sort: SortOption = SortOption.CreatedDateDesc): Flow<List<BrewEntry>> {
         return when (sort) {
             SortOption.CreatedDateDesc -> brewEntryDao.observeAllCreatedDateDesc()
-            SortOption.BeanNameAZ -> brewEntryDao.observeAllBeanNameAZ()
-            SortOption.OriginAZ -> brewEntryDao.observeAllOriginAZ()
-            SortOption.CreatedDate -> brewEntryDao.observeAllCreatedDate()
-            SortOption.LastModifiedDate -> brewEntryDao.observeAllLastModifiedDate()
+            SortOption.CreatedDateAsc -> brewEntryDao.observeAllCreatedDate()
+            SortOption.BeanNameAsc -> brewEntryDao.observeAllBeanNameAZ()
+            SortOption.BeanNameDesc -> brewEntryDao.observeAllBeanNameDesc()
+            SortOption.OriginAsc -> brewEntryDao.observeAllOriginAZ()
+            SortOption.OriginDesc -> brewEntryDao.observeAllOriginDesc()
+            SortOption.LastModifiedDateAsc -> brewEntryDao.observeAllLastModifiedDateAsc()
+            SortOption.LastModifiedDateDesc -> brewEntryDao.observeAllLastModifiedDate()
         }
     }
 }
