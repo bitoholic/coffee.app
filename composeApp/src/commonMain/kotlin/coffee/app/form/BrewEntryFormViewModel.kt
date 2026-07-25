@@ -93,7 +93,7 @@ class BrewEntryFormViewModel(
     }
 
     fun onPhotoPathChanged(path: String?) {
-        _state.update { it.copy(photoPath = path) }
+        // Deprecated since we now support multiple photos
     }
 
     fun enterEditMode(entry: BrewEntry) {
