@@ -1,12 +1,12 @@
 package coffee.app.domain
 
 enum class SortOption(val displayName: String) {
-    CreatedDateAsc("Date ↑"),
-    CreatedDateDesc("Date ↓"),
-    BeanNameAsc("Name ↑"),
-    BeanNameDesc("Name ↓"),
-    OriginAsc("Origin ↑"),
-    OriginDesc("Origin ↓"),
-    LastModifiedDateAsc("Modified ↑"),
-    LastModifiedDateDesc("Modified ↓")
+    CreatedDateAsc("Date Added ↑"),
+    CreatedDateDesc("Date Added ↓"),
+    BeanNameAsc("Bean Name ↑"),
+    BeanNameDesc("Bean Name ↓"),
+    OriginAsc("Bean Origin ↑"),
+    OriginDesc("Bean Origin ↓"),
+    LastModifiedDateAsc("Date Modified ↑"),
+    LastModifiedDateDesc("Date Modified ↓")
 }
