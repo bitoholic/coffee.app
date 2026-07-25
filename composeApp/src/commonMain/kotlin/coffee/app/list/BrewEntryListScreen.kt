@@ -1,6 +1,7 @@
 package coffee.app.list
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
@@ -38,34 +40,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import coffee.app.core.BitoholicTopBar
+import coffee.app.core.BrandRed
+import coffee.app.core.DateFormatUtil
+import coffee.app.core.PhotoManager
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhoto
 import coffee.app.data.database.EntryPhotoDao
 import coffee.app.domain.SortOption
-import coffee.app.core.DateFormatUtil
-import coffee.app.core.BitoholicTopBar
-import coffee.app.core.BrandRed
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.absoluteOffset
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListItemScope
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -167,61 +159,15 @@ fun BrewEntryListScreen(
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Load first photo for list display
-                            val firstPhoto by remember(entry.uuid) {
-                                entryPhotoDao.getPhotosForEntry(entry.uuid).collectAsState(initial = emptyList())
-                            }
-                            
-                            if (firstPhoto.isNotEmpty()) {
-                                val firstPhotoPath = firstPhoto.first().photoPath
-                                val photoBitmap = remember(firstPhotoPath) {
-                                    firstPhotoPath?.let { photoManager.loadPhoto(it) }
-                                }
-                                if (photoBitmap != null) {
-                                    Image(
-                                        bitmap = photoBitmap.asImageBitmap(),
-                                        contentDescription = "Photo",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "No photo",
-                                        tint = BrandRed,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            } else {
-                                Icon(
-                                    Icons.Default.Add,
-                                    contentDescription = "No photo",
-                                    tint = BrandRed,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            
-                            // Badge indicator for multiple photos
-                            if (firstPhoto.size > 1) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(BrandRed),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = firstPhoto.size.toString(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White,
-                                        modifier = Modifier
-                                            .align(Alignment.Center)
-                                    )
-                                }
-                            }
+                            // Show placeholder icon — photo loading TBD for list
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "No photo",
+                                tint = BrandRed,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(12.dp))
                         
                         Column(modifier = Modifier.weight(1f)) {

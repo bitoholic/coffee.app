@@ -1,3 +1,61 @@
+package coffee.app.list
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import coffee.app.core.BitoholicTopBar
+import coffee.app.core.BrandRed
+import coffee.app.core.DateFormatUtil
+import coffee.app.core.PhotoManager
+import coffee.app.data.database.BrewEntry
+import coffee.app.data.database.EntryPhotoDao
+import androidx.compose.runtime.collectAsState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrewEntryDetailScreen(
@@ -9,21 +67,11 @@ fun BrewEntryDetailScreen(
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showPhotoFullscreen by remember { mutableStateOf(false) }
-    var currentIndex by remember { mutableStateOf(0) }
-    
     val context = androidx.compose.ui.platform.LocalContext.current
     val photoManager = remember { PhotoManager(context) }
-    
-    // Load photos from DB
-    val entryPhotos by remember(entry.uuid) {
-        entryPhotoDao.getPhotosForEntry(entry.uuid).collectAsState(initial = emptyList())
-    }
-    
-    val photoBitMaps = remember(entryPhotos) {
-        entryPhotos.map { photo ->
-            photoManager.loadPhoto(photo.photoPath)
-        }
-    }
+    val photos by remember(entry.uuid) { entryPhotoDao.getPhotosForEntry(entry.uuid) }.collectAsState(initial = emptyList())
+    val photoBitmaps = remember(photos) { photos.mapNotNull { photoManager.loadPhoto(it.photoPath) } }
+    val photoBitmap = photoBitmaps.firstOrNull()
     
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -52,8 +100,8 @@ fun BrewEntryDetailScreen(
         )
     }
     
-    // Fullscreen photo overlay with swipeable gallery and pinch-to-zoom
-    if (showPhotoFullscreen && photoBitMaps.isNotEmpty()) {
+    // Fullscreen photo overlay with pinch-to-zoom
+    if (showPhotoFullscreen && photoBitmap != null) {
         var scale by remember { mutableFloatStateOf(1f) }
         var offsetX by remember { mutableFloatStateOf(0f) }
         var offsetY by remember { mutableFloatStateOf(0f) }
@@ -74,32 +122,19 @@ fun BrewEntryDetailScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            val currentPhoto = photoBitMaps[currentIndex]
-            if (currentPhoto != null) {
-                Image(
-                    bitmap = currentPhoto.asImageBitmap(),
-                    contentDescription = "Photo",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offsetX,
-                            translationY = offsetY
-                        ),
-                    contentScale = ContentScale.Fit
-                )
-                
-                // Position indicator
-                Text(
-                    text = "${currentIndex + 1}/${photoBitMaps.size}",
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 16.dp)
-                )
-            }
+            Image(
+                bitmap = photoBitmap.asImageBitmap(),
+                contentDescription = "Photo",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offsetX,
+                        translationY = offsetY
+                    ),
+                contentScale = ContentScale.Fit
+            )
         }
         return
     }
@@ -120,56 +155,24 @@ fun BrewEntryDetailScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Photo gallery section
-            if (entryPhotos.isNotEmpty()) {
-                LazyRow(
+            // Photo section
+            if (photoBitmap != null) {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
+                        .height(220.dp)
+                        .clickable { showPhotoFullscreen = true },
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(entryPhotos) { photo ->
-                        Box(
-                            modifier = Modifier
-                                .height(220.dp)
-                                .width(220.dp)
-                                .clickable { 
-                                    currentIndex = entryPhotos.indexOf(photo)
-                                    showPhotoFullscreen = true
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // This should be a thumbnail of the photo
-                            val photoBitmap = photoManager.loadPhoto(photo.photoPath)
-                            if (photoBitmap != null) {
-                                Image(
-                                    bitmap = photoBitmap.asImageBitmap(),
-                                    contentDescription = "Photo",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                // Placeholder when no photo
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "No photo",
-                                        tint = BrandRed,
-                                        modifier = Modifier.size(36.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    Image(
+                        bitmap = photoBitmap.asImageBitmap(),
+                        contentDescription = "Photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             } else {
-                // Placeholder when no photos exist
+                // Placeholder when no photo
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -313,5 +316,4 @@ private fun DetailRow(label: String, value: String) {
             fontWeight = FontWeight.Medium
         )
     }
-}
 }
