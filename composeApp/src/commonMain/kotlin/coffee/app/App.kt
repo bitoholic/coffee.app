@@ -73,6 +73,7 @@ fun App() {
                 Screen.List -> {
                     BrewEntryListScreen(
                         viewModel = listViewModel,
+                        entryPhotoDao = entryPhotoDao,
                         onNavigateToDetail = { entry ->
                             currentScreen = Screen.Detail(entry)
                         },
