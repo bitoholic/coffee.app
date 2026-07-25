@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,12 +33,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,6 +61,7 @@ import coffee.app.core.PhotoManager
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhotoDao
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.PaddingValues
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,11 +74,96 @@ fun BrewEntryDetailScreen(
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showPhotoFullscreen by remember { mutableStateOf(false) }
+    var fullscreenIndex by remember { mutableIntStateOf(0) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val photoManager = remember { PhotoManager(context) }
     val photos by remember(entry.uuid) { entryPhotoDao.getPhotosForEntry(entry.uuid) }.collectAsState(initial = emptyList())
     val photoBitmaps = remember(photos) { photos.mapNotNull { photoManager.loadPhoto(it.photoPath) } }
-    val photoBitmap = photoBitmaps.firstOrNull()
+    
+    // Photo fullscreen overlay with swipeable navigation and pinch-to-zoom
+    if (showPhotoFullscreen && photoBitmaps.isNotEmpty()) {
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offsetX by remember { mutableFloatStateOf(0f) }
+        var offsetY by remember { mutableFloatStateOf(0f) }
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+                        offsetX += pan.x
+                        offsetY += pan.y
+                    }
+                }
+                .clickable { 
+                    if (scale <= 1.01f) showPhotoFullscreen = false
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            // Display current photo with zoom and pan
+            photoBitmaps[fullscreenIndex]?.let { bitmap ->
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Photo",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY
+                        ),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            
+            // Navigation arrows
+            if (photoBitmaps.size > 1) {
+                if (fullscreenIndex > 0) {
+                    IconButton(
+                        onClick = { fullscreenIndex-- },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowLeft,
+                            contentDescription = "Previous photo",
+                            tint = Color.White
+                        )
+                    }
+                }
+                
+                if (fullscreenIndex < photoBitmaps.size - 1) {
+                    IconButton(
+                        onClick = { fullscreenIndex++ },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowRight,
+                            contentDescription = "Next photo",
+                            tint = Color.White
+                        )
+                    }
+                }
+                
+                // Position indicator
+                Text(
+                    text = "${fullscreenIndex + 1}/${photoBitmaps.size}",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp)
+                )
+            }
+        }
+        return
+    }
     
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -100,44 +192,6 @@ fun BrewEntryDetailScreen(
         )
     }
     
-    // Fullscreen photo overlay with pinch-to-zoom
-    if (showPhotoFullscreen && photoBitmap != null) {
-        var scale by remember { mutableFloatStateOf(1f) }
-        var offsetX by remember { mutableFloatStateOf(0f) }
-        var offsetY by remember { mutableFloatStateOf(0f) }
-        
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale = (scale * zoom).coerceIn(1f, 5f)
-                        offsetX += pan.x
-                        offsetY += pan.y
-                    }
-                }
-                .clickable { 
-                    if (scale <= 1.01f) showPhotoFullscreen = false
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                bitmap = photoBitmap.asImageBitmap(),
-                contentDescription = "Photo",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offsetX,
-                        translationY = offsetY
-                    ),
-                contentScale = ContentScale.Fit
-            )
-        }
-        return
-    }
     
     Scaffold(
         topBar = {
@@ -156,20 +210,32 @@ fun BrewEntryDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Photo section
-            if (photoBitmap != null) {
-                Box(
+            if (photoBitmaps.isNotEmpty()) {
+                LazyRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
-                        .clickable { showPhotoFullscreen = true },
-                    contentAlignment = Alignment.Center
+                        .height(220.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
-                    Image(
-                        bitmap = photoBitmap.asImageBitmap(),
-                        contentDescription = "Photo",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                    itemsIndexed(photoBitmaps) { index, bitmap ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.3f)
+                                .height(220.dp)
+                                .clickable { 
+                                    fullscreenIndex = index
+                                    showPhotoFullscreen = true
+                                }
+                        ) {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = "Photo $index",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 }
             } else {
                 // Placeholder when no photo
