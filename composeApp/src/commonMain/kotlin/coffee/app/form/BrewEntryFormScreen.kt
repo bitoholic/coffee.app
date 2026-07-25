@@ -63,6 +63,9 @@ import coffee.app.core.BitoholicTopBar
 import coffee.app.core.BrandRed
 import coffee.app.core.PhotoManager
 import androidx.compose.ui.graphics.Color
+import java.util.UUID
+import androidx.core.content.FileProvider
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,6 +151,105 @@ fun BrewEntryFormScreen(
                 singleLine = true
             )
 
+            // Photo section (moved to top of form)
+            // Photo picker with Camera option
+            var showPhotoPicker by remember { mutableStateOf(false) }
+            val photoManager = remember { coffee.app.core.PhotoManager(context) }
+
+            // Camera launcher
+            val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+                if (success) {
+                    // Trigger refresh of the photo path
+                    viewModel.onPhotoPathChanged(state.photoPath)
+                }
+            }
+
+            // Gallery launcher
+            val photoLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+                uri?.let {
+                    val path = photoManager.savePhoto(it)
+                    viewModel.onPhotoPathChanged(path)
+                }
+            }
+
+            // Camera URI - needed for camera launcher
+            val photoUri = remember {
+                val file = File(context.filesDir, "photos/camera_${UUID.randomUUID()}.jpg")
+                file.parentFile?.mkdirs()
+                androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+            }
+
+            // Dialog for photo selection
+            if (showPhotoPicker) {
+                AlertDialog(
+                    onDismissRequest = { showPhotoPicker = false },
+                    title = { Text("Add Photo") },
+                    text = {
+                        Column {
+                            TextButton(onClick = { 
+                                showPhotoPicker = false
+                                photoLauncher.launch("image/*")
+                            }) { Text("Choose from Gallery") }
+                            TextButton(onClick = { 
+                                showPhotoPicker = false
+                                cameraLauncher.launch(photoUri)
+                            }) { Text("Take Photo") }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (state.photoPath != null) {
+                    // Show photo thumbnail
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Load and display the photo
+                        val bitmap = remember(state.photoPath) {
+                            photoManager.loadPhoto(state.photoPath!!)
+                        }
+                        bitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "Entry photo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                    // Remove button
+                    IconButton(
+                        onClick = { viewModel.onPhotoPathChanged(null) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(Icons.Default.Close, "Remove photo")
+                    }
+                } else {
+                    // Add photo button
+                    OutlinedButton(onClick = { showPhotoPicker = true }) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Photo")
+                    }
+                }
+            }
+
             // Bean Origin
             OriginDropdown(
                 origins = state.origins.map { it.name },
@@ -217,63 +319,6 @@ fun BrewEntryFormScreen(
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 5
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Photo section
-            val photoManager = remember { coffee.app.core.PhotoManager(context) }
-            val photoLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri ->
-                uri?.let {
-                    val path = photoManager.savePhoto(it)
-                    viewModel.onPhotoPathChanged(path)
-                }
-            }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                if (state.photoPath != null) {
-                    // Show photo thumbnail
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Load and display the photo
-                        val bitmap = remember(state.photoPath) {
-                            photoManager.loadPhoto(state.photoPath!!)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "Entry photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                    // Remove button
-                    IconButton(
-                        onClick = { viewModel.onPhotoPathChanged(null) },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(Icons.Default.Close, "Remove photo")
-                    }
-                } else {
-                    // Add photo button
-                    OutlinedButton(onClick = { photoLauncher.launch("image/*") }) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Photo")
-                    }
-                }
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

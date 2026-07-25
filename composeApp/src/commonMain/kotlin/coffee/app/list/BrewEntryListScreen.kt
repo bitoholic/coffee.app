@@ -50,6 +50,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +66,7 @@ fun BrewEntryListScreen(
 ) {
     var isSortExpanded by remember { mutableStateOf(false) }
     val entries by viewModel.entries.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
     
     Scaffold(
         topBar = {
@@ -124,7 +129,23 @@ fun BrewEntryListScreen(
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center
-                        ) { }
+                        ) {
+                            val photoManager = remember { coffee.app.core.PhotoManager(context) }
+                            val photoBitmap = remember(entry.photoPath) {
+                                entry.photoPath?.let { photoManager.loadPhoto(it) }
+                            }
+                            
+                            if (photoBitmap != null) {
+                                Image(
+                                    bitmap = photoBitmap.asImageBitmap(),
+                                    contentDescription = "Photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                // Empty placeholder (just the colored circle) 
+                            }
+                        }
                         
                         Spacer(modifier = Modifier.width(12.dp))
                         
