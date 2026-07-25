@@ -146,6 +146,22 @@ fun BrewEntryDetailScreen(
                         contentScale = ContentScale.Crop
                     )
                 }
+            } else {
+                // Placeholder when no photo
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "No photo",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
             
             Column(
@@ -161,12 +177,22 @@ fun BrewEntryDetailScreen(
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
-                // Date line
-                Text(
-                    text = DateFormatUtil.toShortDate(entry.createdDate),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Dates
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = DateFormatUtil.toShortDate(entry.createdDate),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Modified: ${DateFormatUtil.toShortDate(entry.lastModifiedDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(20.dp))
                 
@@ -225,7 +251,7 @@ fun BrewEntryDetailScreen(
                         onClick = { showDeleteConfirmation = true },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
+                            containerColor = BrandRed,
                             contentColor = Color.White
                         )
                     ) {
