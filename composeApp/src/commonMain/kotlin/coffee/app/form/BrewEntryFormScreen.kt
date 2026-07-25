@@ -138,20 +138,7 @@ fun BrewEntryFormScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Bean Name
-            OutlinedTextField(
-                value = state.beanName,
-                onValueChange = viewModel::onBeanNameChanged,
-                label = { Text("Bean Name *") },
-                isError = state.validationErrors.containsKey("beanName"),
-                supportingText = state.validationErrors["beanName"]?.let {
-                    { Text(it, color = MaterialTheme.colorScheme.error) }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            // Photo section (moved to top of form)
+            // Photo section — at the top
             // Photo picker with Camera option
             var showPhotoPicker by remember { mutableStateOf(false) }
             val photoManager = remember { coffee.app.core.PhotoManager(context) }
@@ -252,6 +239,19 @@ fun BrewEntryFormScreen(
                     }
                 }
             }
+
+            // Bean Name
+            OutlinedTextField(
+                value = state.beanName,
+                onValueChange = viewModel::onBeanNameChanged,
+                label = { Text("Bean Name *") },
+                isError = state.validationErrors.containsKey("beanName"),
+                supportingText = state.validationErrors["beanName"]?.let {
+                    { Text(it, color = MaterialTheme.colorScheme.error) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
 
             // Bean Origin
             OriginDropdown(
