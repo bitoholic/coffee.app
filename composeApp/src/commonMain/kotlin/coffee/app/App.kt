@@ -3,11 +3,11 @@ package coffee.app
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.isSystemInDarkTheme
+import coffee.app.core.DarkColorScheme
+import coffee.app.core.LightColorScheme
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.CoffeeDatabase
 import coffee.app.data.repository.BrewEntryRepository
@@ -54,7 +54,7 @@ fun App() {
     }
 
     MaterialTheme(
-        colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
+        colorScheme = if (isDarkTheme) DarkColorScheme else LightColorScheme
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
