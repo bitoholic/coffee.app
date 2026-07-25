@@ -441,9 +441,12 @@ class FakeBrewEntryDao : BrewEntryDao {
     override suspend fun deleteByUuid(uuid: String) {}
     override fun observeAllCreatedDateDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllBeanNameAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
+    override fun observeAllBeanNameDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllOriginAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
+    override fun observeAllOriginDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllCreatedDate(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllLastModifiedDate(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
+    override fun observeAllLastModifiedDateAsc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override suspend fun getById(uuid: String): BrewEntry? = null
 }
 

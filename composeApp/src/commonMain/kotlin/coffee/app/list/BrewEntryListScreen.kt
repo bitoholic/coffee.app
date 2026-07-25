@@ -95,40 +95,42 @@ fun BrewEntryListScreen(
                 .padding(paddingValues)
         ) {
             // Sort bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = { isSortExpanded = true }) {
-                    Text(
-                        text = "Sort: ${currentSort.name.replaceFirstChar { it.uppercaseChar() }}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Icon(
-                        Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+            Box {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = { isSortExpanded = true }) {
+                        Text(
+                            text = currentSort.displayName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-            }
-            
-            // Sort dropdown menu
-            DropdownMenu(
-                expanded = isSortExpanded,
-                onDismissRequest = { isSortExpanded = false }
-            ) {
-                SortOption.values().forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option.name.replaceFirstChar { it.uppercaseChar() }) },
-                        onClick = {
-                            viewModel.setSortOption(option)
-                            isSortExpanded = false
-                        }
-                    )
+                
+                // Sort dropdown menu — anchored below the Row
+                DropdownMenu(
+                    expanded = isSortExpanded,
+                    onDismissRequest = { isSortExpanded = false }
+                ) {
+                    SortOption.values().forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.displayName) },
+                            onClick = {
+                                viewModel.setSortOption(option)
+                                isSortExpanded = false
+                            }
+                        )
+                    }
                 }
             }
             
@@ -159,7 +161,6 @@ fun BrewEntryListScreen(
                             val photoBitmap = remember(entry.photoPath) {
                                 entry.photoPath?.let { photoManager.loadPhoto(it) }
                             }
-                            
                             if (photoBitmap != null) {
                                 Image(
                                     bitmap = photoBitmap.asImageBitmap(),
@@ -168,7 +169,12 @@ fun BrewEntryListScreen(
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                // Empty placeholder (just the colored circle) 
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "No photo",
+                                    tint = BrandRed,
+                                    modifier = Modifier.size(24.dp)
+                                )
                             }
                         }
                         

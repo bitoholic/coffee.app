@@ -25,11 +25,20 @@ interface BrewEntryDao {
     @Query("SELECT * FROM brew_entries ORDER BY beanOrigin ASC")
     fun observeAllOriginAZ(): Flow<List<BrewEntry>>
 
+    @Query("SELECT * FROM brew_entries ORDER BY beanName DESC")
+    fun observeAllBeanNameDesc(): Flow<List<BrewEntry>>
+
+    @Query("SELECT * FROM brew_entries ORDER BY beanOrigin DESC")
+    fun observeAllOriginDesc(): Flow<List<BrewEntry>>
+
     @Query("SELECT * FROM brew_entries ORDER BY createdDate ASC")
     fun observeAllCreatedDate(): Flow<List<BrewEntry>>
 
     @Query("SELECT * FROM brew_entries ORDER BY lastModifiedDate DESC")
     fun observeAllLastModifiedDate(): Flow<List<BrewEntry>>
+
+    @Query("SELECT * FROM brew_entries ORDER BY lastModifiedDate ASC")
+    fun observeAllLastModifiedDateAsc(): Flow<List<BrewEntry>>
 
     @Query("SELECT * FROM brew_entries WHERE uuid = :uuid")
     suspend fun getById(uuid: String): BrewEntry?
