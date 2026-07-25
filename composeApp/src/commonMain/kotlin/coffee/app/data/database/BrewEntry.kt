@@ -13,7 +13,6 @@ data class BrewEntry(
     val grinderSetting: Int,
     val portionWeight: Double,
     val description: String? = null,
-    val photoPath: String? = null,
     val createdDate: Long,
     val lastModifiedDate: Long
 )

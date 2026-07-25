@@ -93,6 +93,7 @@ fun App() {
                     val screen = currentScreen as Screen.Detail
                     BrewEntryDetailScreen(
                         entry = screen.entry,
+                        entryPhotoDao = entryPhotoDao,
                         onBack = { currentScreen = Screen.List },
                         onEdit = {
                             currentScreen = Screen.Form(screen.entry)
