@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -66,6 +68,7 @@ fun BrewEntryListScreen(
 ) {
     var isSortExpanded by remember { mutableStateOf(false) }
     val entries by viewModel.entries.collectAsState()
+    val currentSort by viewModel.currentSortOption.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     
     Scaffold(
@@ -91,6 +94,28 @@ fun BrewEntryListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Sort bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { isSortExpanded = true }) {
+                    Text(
+                        text = "Sort: ${currentSort.name.replaceFirstChar { it.uppercaseChar() }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Icon(
+                        Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
             // Sort dropdown menu
             DropdownMenu(
                 expanded = isSortExpanded,
