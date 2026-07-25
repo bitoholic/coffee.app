@@ -173,16 +173,24 @@ fun BrewEntryDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp)
+                        .height(120.dp)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "No photo",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(32.dp)
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "No photo",
+                            tint = BrandRed,
+                            modifier = Modifier.size(36.dp)
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "No photo",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
             
