@@ -105,63 +105,29 @@ fun BrewEntryListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Sort bar
+            // Sort + Search bar
             Box {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = { isSortExpanded = true }) {
-                        Text(
-                            text = currentSort.displayName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Icon(
-                            Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    
-                    // Search icon (aligned right)
-                    IconButton(
-                        onClick = { 
-                            isSearchExpanded = !isSearchExpanded
-                            if (!isSearchExpanded) {
-                                // Clear search when collapsing
-                                viewModel.setSearchQuery("")
-                            }
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search"
-                        )
-                    }
-                }
-                
-                // Search bar (appears when expanded)
                 if (isSearchExpanded) {
+                    // Search mode: sort button + text field + close
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Text(
+                            text = currentSort.displayName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         TextField(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp),
-                            placeholder = { Text("Search brews...") }
+                                .height(48.dp)
                         )
-                        
-                        // Close/X button
                         IconButton(
                             onClick = {
                                 isSearchExpanded = false
@@ -171,6 +137,36 @@ fun BrewEntryListScreen(
                             Icon(
                                 Icons.Default.Close,
                                 contentDescription = "Close search"
+                            )
+                        }
+                    }
+                } else {
+                    // Normal mode: sort button + search icon
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = { isSortExpanded = true }) {
+                            Text(
+                                text = currentSort.displayName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Icon(
+                                Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        IconButton(
+                            onClick = { isSearchExpanded = true }
+                        ) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = "Search"
                             )
                         }
                     }
