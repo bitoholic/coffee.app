@@ -38,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -85,6 +86,13 @@ fun BrewEntryDetailScreen(
         var scale by remember { mutableFloatStateOf(1f) }
         var offsetX by remember { mutableFloatStateOf(0f) }
         var offsetY by remember { mutableFloatStateOf(0f) }
+        
+        // Reset zoom/pan when switching photos
+        LaunchedEffect(fullscreenIndex) {
+            scale = 1f
+            offsetX = 0f
+            offsetY = 0f
+        }
         
         Box(
             modifier = Modifier
