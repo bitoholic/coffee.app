@@ -3,6 +3,8 @@ package coffee.app.form
 import coffee.app.core.ValidationUtil
 import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.BrewEntryDao
+import coffee.app.data.database.EntryPhoto
+import coffee.app.data.database.EntryPhotoDao
 import coffee.app.data.database.Origin
 import coffee.app.data.database.OriginDao
 import coffee.app.data.repository.BrewEntryRepository
@@ -50,6 +52,7 @@ class BrewEntryFormViewModelTest {
         viewModel = BrewEntryFormViewModel(
             brewEntryRepository = brewEntryRepository,
             originRepository = originRepository,
+            entryPhotoDao = FakeEntryPhotoDao(),
             coroutineScope = CoroutineScope(Dispatchers.Default)
         )
     }
@@ -455,4 +458,13 @@ class FakeOriginDao : OriginDao {
     override suspend fun deleteByName(name: String) {}
     override fun observeAll(): Flow<List<Origin>> = MutableStateFlow(emptyList())
     override suspend fun existsIgnoreCase(name: String): Boolean = false
+}
+
+class FakeEntryPhotoDao : EntryPhotoDao {
+    override fun getPhotosForEntry(entryUuid: String): Flow<List<EntryPhoto>> = MutableStateFlow(emptyList())
+    override suspend fun insert(photo: EntryPhoto) {}
+    override suspend fun insertAll(photos: List<EntryPhoto>) {}
+    override suspend fun deleteById(id: Int) {}
+    override suspend fun deleteByEntryUuid(entryUuid: String) {}
+    override suspend fun nextSortOrder(entryUuid: String): Int = 1
 }
