@@ -16,9 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * Represents the mutable state of the brew entry form.
- */
 data class FormState(
     val beanName: String = "",
     val beanOrigin: String = "",
@@ -26,6 +23,7 @@ data class FormState(
     val grinderSetting: String = "",
     val portionWeight: String = "",
     val description: String = "",
+    val photoPath: String? = null,
     val validationErrors: Map<String, String> = emptyMap(),
     val isSaving: Boolean = false,
     val saveSuccess: Boolean = false,
@@ -34,10 +32,6 @@ data class FormState(
     val originalValues: BrewEntry? = null
 )
 
-/**
- * ViewModel managing the brew entry form's state, validation, and persistence.
- * Uses only KMP-compatible types — no Android ViewModel dependency required.
- */
 class BrewEntryFormViewModel(
     private val brewEntryRepository: BrewEntryRepository,
     private val originRepository: OriginRepository,
@@ -77,7 +71,6 @@ class BrewEntryFormViewModel(
     }
 
     fun onGrinderSettingChanged(value: String) {
-        // Only allow digits and empty string for numeric input
         if (value.isEmpty() || value.all { it.isDigit() }) {
             _state.update {
                 it.copy(grinderSetting = value, validationErrors = emptyMap(), saveSuccess = false)
@@ -86,7 +79,6 @@ class BrewEntryFormViewModel(
     }
 
     fun onPortionWeightChanged(value: String) {
-        // Allow digits and a single decimal point
         if (value.isEmpty() || value.matches(Regex("^\\d*\\.?\\d*$"))) {
             _state.update {
                 it.copy(portionWeight = value, validationErrors = emptyMap(), saveSuccess = false)
@@ -100,9 +92,10 @@ class BrewEntryFormViewModel(
         }
     }
 
-    /**
-     * Enters edit mode with the given BrewEntry
-     */
+    fun onPhotoPathChanged(path: String?) {
+        _state.update { it.copy(photoPath = path) }
+    }
+
     fun enterEditMode(entry: BrewEntry) {
         _state.update {
             it.copy(
@@ -112,6 +105,7 @@ class BrewEntryFormViewModel(
                 grinderSetting = entry.grinderSetting.toString(),
                 portionWeight = entry.portionWeight.toString(),
                 description = entry.description ?: "",
+                photoPath = entry.photoPath,
                 isEditing = true,
                 originalValues = entry,
                 validationErrors = emptyMap(),
@@ -120,11 +114,6 @@ class BrewEntryFormViewModel(
         }
     }
 
-    /**
-     * Checks if form state has been modified.
-     * For add mode: dirty if any field has been filled in.
-     * For edit mode: dirty if any field differs from original values.
-     */
     fun isDirty(): Boolean {
         val state = _state.value
         
@@ -135,31 +124,26 @@ class BrewEntryFormViewModel(
                     state.roastType != RoastType.valueOf(original.roastType) ||
                     state.grinderSetting != original.grinderSetting.toString() ||
                     state.portionWeight != original.portionWeight.toString() ||
-                    state.description != (original.description ?: "")
+                    state.description != (original.description ?: "") ||
+                    state.photoPath != original.photoPath
         }
         
-        // Add mode: dirty if user has entered anything
         return state.beanName.isNotBlank() ||
                 state.beanOrigin.isNotBlank() ||
                 state.roastType != null ||
                 state.grinderSetting.isNotBlank() ||
                 state.portionWeight.isNotBlank() ||
-                state.description.isNotBlank()
+                state.description.isNotBlank() ||
+                state.photoPath != null
     }
 
-    /**
-     * Validates the current form state and persists if valid.
-     * Sets validationErrors on failure or saveSuccess on success.
-     */
     fun save() {
         val currentState = _state.value
 
-        // Parse numeric fields
         val grinderSetting = currentState.grinderSetting.toIntOrNull()
         val portionWeight = currentState.portionWeight.toDoubleOrNull()
         val roastTypeStr = currentState.roastType?.name
 
-        // Validate all fields
         val errors = mutableMapOf<String, String>()
 
         ValidationUtil.validateBeanName(currentState.beanName)
@@ -206,6 +190,7 @@ class BrewEntryFormViewModel(
                 grinderSetting = grinderSetting!!,
                 portionWeight = portionWeight!!,
                 description = currentState.description.ifBlank { null },
+                photoPath = currentState.photoPath,
                 createdDate = if (currentState.isEditing) currentState.originalValues!!.createdDate else now,
                 lastModifiedDate = now,
                 uuid = if (currentState.isEditing) currentState.originalValues!!.uuid else UUID.randomUUID().toString()
@@ -230,6 +215,7 @@ class BrewEntryFormViewModel(
                 grinderSetting = "",
                 portionWeight = "",
                 description = "",
+                photoPath = null,
                 validationErrors = emptyMap(),
                 saveSuccess = false
             ) 
