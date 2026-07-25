@@ -62,9 +62,10 @@ fun App() {
         ) {
             val brewRepo = remember { BrewEntryRepository(db.brewEntryDao()) }
             val originRepo = remember { OriginRepository(db.originDao()) }
+            val entryPhotoDao = remember { db.entryPhotoDao() }
             
             val listViewModel = remember { BrewEntryListViewModel(brewRepo) }
-            val formViewModel = remember { BrewEntryFormViewModel(brewRepo, originRepo) }
+            val formViewModel = remember { BrewEntryFormViewModel(brewRepo, originRepo, entryPhotoDao) }
             
             var currentScreen by remember { mutableStateOf<Screen>(Screen.List) }
             
