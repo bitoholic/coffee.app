@@ -66,6 +66,11 @@ import androidx.compose.ui.graphics.Color
 import java.util.UUID
 import androidx.core.content.FileProvider
 import java.io.File
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.items
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,18 +153,20 @@ fun BrewEntryFormScreen(
             val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
                 if (success) {
                     currentCameraPath?.let { path ->
-                        viewModel.onPhotoPathChanged(path)
+                        viewModel.addPhoto(path)
                     }
                 }
             }
 
             // Gallery launcher
             val photoLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.GetContent()
-            ) { uri ->
-                uri?.let {
-                    val path = photoManager.savePhoto(it)
-                    viewModel.onPhotoPathChanged(path)
+                contract = ActivityResultContracts.GetMultipleContents()
+            ) { uris ->
+                uris.forEach { uri ->
+                    uri?.let {
+                        val path = photoManager.savePhoto(it)
+                        viewModel.addPhoto(path)
+                    }
                 }
             }
 
@@ -196,47 +203,71 @@ fun BrewEntryFormScreen(
                 )
             }
             
+            // Thumbnail gallery with LazyRow
+            if (state.photos.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    itemsIndexed(state.photos) { index, photoPath ->
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            // Load and display the photo
+                            val bitmap = remember(photoPath) {
+                                photoManager.loadPhoto(photoPath)
+                            }
+                            bitmap?.let {
+                                Image(
+                                    bitmap = it.asImageBitmap(),
+                                    contentDescription = "Entry photo",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                IconButton(
+                                    onClick = { viewModel.removePhoto(index) },
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(20.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove photo",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Add photo button (disabled if at 10 photos)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (state.photoPath != null) {
-                    // Show photo thumbnail
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Load and display the photo
-                        val bitmap = remember(state.photoPath) {
-                            photoManager.loadPhoto(state.photoPath!!)
-                        }
-                        bitmap?.let {
-                            Image(
-                                bitmap = it.asImageBitmap(),
-                                contentDescription = "Entry photo",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                    // Remove button
-                    IconButton(
-                        onClick = { viewModel.onPhotoPathChanged(null) },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(Icons.Default.Close, "Remove photo")
-                    }
-                } else {
-                    // Add photo button
-                    OutlinedButton(onClick = { showPhotoPicker = true }) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Photo")
-                    }
+                OutlinedButton(
+                    onClick = { showPhotoPicker = true },
+                    enabled = state.photos.size < 10
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Photo")
+                }
+                if (state.photos.size >= 10) {
+                    Text(
+                        "Maximum 10 photos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
