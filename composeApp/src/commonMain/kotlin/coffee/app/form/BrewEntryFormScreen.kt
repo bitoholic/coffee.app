@@ -165,7 +165,9 @@ fun BrewEntryFormScreen(
                 uris.forEach { uri ->
                     uri?.let {
                         val path = photoManager.savePhoto(it)
-                        viewModel.addPhoto(path)
+                        if (path != null && state.photos.size < 10) {
+                            viewModel.addPhoto(path)
+                        }
                     }
                 }
             }
