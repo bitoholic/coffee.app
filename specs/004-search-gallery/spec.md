@@ -1,6 +1,6 @@
 # Feature Specification: Image Gallery & List Search
 
-**Feature Branch**: `feature/022-search-gallery`
+**Feature Branch**: `feature/004-search-gallery`
 
 **Created**: 2026-07-25
 
