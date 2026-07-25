@@ -27,6 +27,9 @@ class BrewEntryListViewModel(
     private val _currentSortOption = MutableStateFlow(SortOption.CreatedDateDesc)
     val currentSortOption: StateFlow<SortOption> = _currentSortOption.asStateFlow()
     
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var collectionJob: Job? = null
     
@@ -39,7 +42,15 @@ class BrewEntryListViewModel(
         collectionJob = viewModelScope.launch {
             _isLoading.value = true
             brewEntryRepository.getAll(sort).collectLatest { entries ->
-                _entries.value = entries
+                // Apply search filter after sorting
+                val filteredEntries = if (_searchQuery.value.isNotBlank()) {
+                    entries.filter { entry ->
+                        entry.beanName.contains(_searchQuery.value, true)
+                    }
+                } else {
+                    entries
+                }
+                _entries.value = filteredEntries
                 _isLoading.value = false
             }
         }
@@ -48,6 +59,12 @@ class BrewEntryListViewModel(
     fun setSortOption(sortOption: SortOption) {
         _currentSortOption.value = sortOption
         collectEntries(sortOption)
+    }
+    
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        // Re-collect entries to apply filtering
+        collectEntries(_currentSortOption.value)
     }
     
     fun onCleared() {
