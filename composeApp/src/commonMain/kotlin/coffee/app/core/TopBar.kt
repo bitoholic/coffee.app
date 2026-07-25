@@ -51,7 +51,7 @@ fun BitoholicTopBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "01\n10",
+                        text = "0101\n1010",
                         color = androidx.compose.ui.graphics.Color.White,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 12.sp,
