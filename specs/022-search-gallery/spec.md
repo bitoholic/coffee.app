@@ -20,8 +20,9 @@ As a user, I want to attach and view multiple photos per brew entry so I can doc
 
 **Acceptance Scenarios**:
 
-1. **Given** I am on the add/edit form, **When** I tap "Add Photo", **Then** I can select multiple images from the gallery (or take multiple camera shots).
-2. **Given** I have selected multiple images, **When** they're attached, **Then** thumbnails appear in a horizontal scrollable row on the form.
+1. **Given** I am on the add/edit form, **When** I tap "Add Photo", **Then** I can select multiple images from the gallery via multi-select picker, or take photos one-by-one with the camera.
+2. **Given** I select multiple images from gallery, **When** they're attached, **Then** thumbnails appear in a horizontal scrollable row on the form.
+3. **Given** I take a photo with the camera, **When** it's captured, **Then** it's added to the thumbnail row and I can tap "Add Photo" again to take another.
 3. **Given** an entry has multiple photos, **When** viewed on the detail screen, **Then** a horizontal scrollable gallery appears at the top.
 4. **Given** I tap a photo in the gallery, **When** viewing it fullscreen, **Then** I can swipe left/right between photos.
 5. **Given** I am editing an entry, **When** I tap the X on any photo thumbnail, **Then** that photo is removed.
@@ -40,10 +41,11 @@ As a user, I want to search my brew entries by name, origin, or notes so I can q
 
 **Acceptance Scenarios**:
 
-1. **Given** I am on the main list screen, **When** I tap the search icon, **Then** a search bar appears at the top.
-2. **Given** the search bar is open, **When** I type text, **Then** the list filters in real-time to show only entries where bean name, origin, or description contains the search text (case-insensitive).
-3. **Given** the search bar has text, **When** I clear it, **Then** the full list is restored.
-4. **Given** the search bar is open, **When** I tap the back/X button, **Then** the search bar closes and the full list shows.
+1. **Given** I am on the main list screen, **When** I tap the search icon next to the sort select, **Then** a search bar expands inline, taking space between the sort select and the search icon.
+2. **Given** the search bar is open, **When** I type text, **Then** the list filters in real-time as I type (no button needed) — only entries where bean name contains the search text (case-insensitive) are shown.
+3. **Given** the search results are displayed, **When** I change the sort option, **Then** the filtered results re-sort according to the selected sort.
+4. **Given** the search bar has text, **When** I clear it, **Then** the full unfiltered list is restored with the current sort applied.
+5. **Given** the search bar is open, **When** I tap the close/X button, **Then** the search bar collapses and the full list shows.
 
 ---
 
@@ -62,7 +64,7 @@ As a user, I want to search my brew entries by name, origin, or notes so I can q
 - **FR-001**: The app MUST support up to 10 photos per brew entry.
 - **FR-002**: Photos MUST be stored as individual files in `filesDir/photos/` with UUID filenames, referenced by a new `entry_photos` Room table.
 - **FR-003**: A new `EntryPhoto` entity MUST store photo UUID, file path, and display order per entry.
-- **FR-004**: The form MUST have an Add Photo button that supports multiple gallery selection or sequential camera captures.
+- **FR-004**: The form MUST have an Add Photo button that supports multiple gallery selection (`GetMultipleContents`) or sequential camera captures.
 - **FR-005**: The form MUST show a horizontal scrollable row of photo thumbnails (64dp) with X remove buttons.
 - **FR-006**: The detail screen MUST show a horizontal scrollable gallery at the top with tap-to-expand and swipe navigation.
 - **FR-007**: The list screen MUST show the first photo as a thumbnail, or a stacked indicator for multiple photos.
@@ -97,8 +99,11 @@ As a user, I want to search my brew entries by name, origin, or notes so I can q
 
 ## Assumptions
 
-- The `BrewEntry.photoPath` field will be replaced by the `EntryPhoto` table. Old single-photo entries will lose photo association — acceptable for dev phase.
-- Search filters the in-memory list via Kotlin's `filter {}` — fast enough for hundreds of entries.
+- The `BrewEntry.photoPath` field will be replaced by the `EntryPhoto` table. Existing single-photo entries are migrated by inserting their photoPath into the new table during DB upgrade.
 - Gallery multi-select uses `ActivityResultContracts.GetMultipleContents()`.
-- Horizontal photo gallery on detail uses `LazyRow` with `HorizontalPager` or similar for fullscreen swipe.
-- Database version bumped to 4 with migration handling.
+- Camera captures one photo at a time, user taps "Add Photo" again for the next.
+- Horizontal photo gallery on detail uses `LazyRow` with swipeable fullscreen view.
+- Database version bumped to 4. Existing `photoPath` values are migrated to the new `EntryPhoto` table on upgrade.
+- Search filters the in-memory list by bean name only via Kotlin's `filter { it.beanName.contains(query, ignoreCase = true) }`.
+- Search results remain fully sortable via the existing sort dropdown.
+- The search bar sits inline between the sort button (left) and search icon (right), expanding to fill available space.
