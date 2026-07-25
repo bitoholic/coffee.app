@@ -142,9 +142,7 @@ fun BrewEntryListScreen(
                                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                                 unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                                focusedIndicatorColor = Color.Transparent
                             ),
                             shape = RoundedCornerShape(20.dp)
                         )
