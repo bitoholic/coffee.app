@@ -157,10 +157,12 @@ fun BrewEntryFormScreen(
             val photoManager = remember { coffee.app.core.PhotoManager(context) }
 
             // Camera launcher
+            var currentCameraPath by remember { mutableStateOf<String?>(null) }
             val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
                 if (success) {
-                    // Trigger refresh of the photo path
-                    viewModel.onPhotoPathChanged(state.photoPath)
+                    currentCameraPath?.let { path ->
+                        viewModel.onPhotoPathChanged(path)
+                    }
                 }
             }
 
@@ -178,6 +180,7 @@ fun BrewEntryFormScreen(
             val photoUri = remember {
                 val file = File(context.filesDir, "photos/camera_${UUID.randomUUID()}.jpg")
                 file.parentFile?.mkdirs()
+                currentCameraPath = file.absolutePath
                 androidx.core.content.FileProvider.getUriForFile(
                     context,
                     "${context.packageName}.fileprovider",
