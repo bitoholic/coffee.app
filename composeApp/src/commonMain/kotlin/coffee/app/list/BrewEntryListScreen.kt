@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -132,12 +133,9 @@ fun BrewEntryListScreen(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
-                                .weight(0.6f)
+                                .widthIn(max = 120.dp)
                                 .height(32.dp),
                             singleLine = true,
-                            textStyle = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 12.sp
-                            ),
                             shape = RoundedCornerShape(16.dp)
                         )
                         IconButton(
