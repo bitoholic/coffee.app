@@ -3,9 +3,10 @@ package coffee.app.list
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +47,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +57,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coffee.app.core.BitoholicTopBar
 import coffee.app.core.BrandRed
@@ -65,6 +69,7 @@ import coffee.app.data.database.BrewEntry
 import coffee.app.data.database.EntryPhotoDao
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.PaddingValues
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,75 +87,111 @@ fun BrewEntryDetailScreen(
     val photoManager = remember { PhotoManager(context) }
     val photos by remember(entry.uuid) { entryPhotoDao.getPhotosForEntry(entry.uuid) }.collectAsState(initial = emptyList())
     val photoBitmaps = remember(photos) { photos.mapNotNull { photoManager.loadPhoto(it.photoPath) } }
-    
-    // Photo fullscreen overlay with swipeable navigation and pinch-to-zoom
+
+    // Photo fullscreen overlay: HorizontalPager drives swipe navigation between
+    // photos, and each photo can be pinch-zoomed/panned independently. The two
+    // gestures are kept from fighting each other by disabling the pager's own
+    // swipe while the current photo is zoomed in (userScrollEnabled below) —
+    // a single-finger drag then always pans the zoomed photo instead of
+    // changing pages, and a two-finger pinch always zooms regardless.
     if (showPhotoFullscreen && photoBitmaps.isNotEmpty()) {
+        val pagerState = rememberPagerState(initialPage = fullscreenIndex) { photoBitmaps.size }
+        val coroutineScope = rememberCoroutineScope()
+
+        // Zoom/pan of whichever photo is currently on screen. Only one photo
+        // can be zoomed at a time, so a single set of state (rather than one
+        // per photo) is enough, and it's reset whenever the visible page
+        // changes so every photo always opens at its default fit-to-screen size.
         var scale by remember { mutableFloatStateOf(1f) }
         var offsetX by remember { mutableFloatStateOf(0f) }
         var offsetY by remember { mutableFloatStateOf(0f) }
-        
-        // Reset zoom/pan when switching photos
-        LaunchedEffect(fullscreenIndex) {
+        // Actual on-screen (post letterbox) size of the current photo, used to
+        // clamp panning so the image can't be dragged past its own edges.
+        var imageSize by remember { mutableStateOf(IntSize.Zero) }
+
+        LaunchedEffect(pagerState.currentPage) {
+            fullscreenIndex = pagerState.currentPage
             scale = 1f
             offsetX = 0f
             offsetY = 0f
         }
-        
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        val newScale = (scale * zoom).coerceIn(1f, 5f)
-                        if (newScale > 1.01f) {
-                            // Zoomed in: pan the photo, clamp to bounds
-                            scale = newScale
-                            val halfW = (photoBitmaps[fullscreenIndex]?.width?.toFloat() ?: 0f) * (scale - 1f) / 2f
-                            val halfH = (photoBitmaps[fullscreenIndex]?.height?.toFloat() ?: 0f) * (scale - 1f) / 2f
-                            offsetX = (offsetX + pan.x).coerceIn(-halfW, halfW)
-                            offsetY = (offsetY + pan.y).coerceIn(-halfH, halfH)
-                        }
-                    }
-                }
-                .pointerInput(fullscreenIndex) {
-                    detectHorizontalDragGestures { _, dragAmount ->
-                        if (photoBitmaps.size > 1 && scale <= 1.01f) {
-                            if (dragAmount > 200f && fullscreenIndex > 0) {
-                                fullscreenIndex--
-                            } else if (dragAmount < -200f && fullscreenIndex < photoBitmaps.size - 1) {
-                                fullscreenIndex++
-                            }
-                        }
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures { showPhotoFullscreen = false }
-                },
-            contentAlignment = Alignment.Center
         ) {
-            // Display current photo with zoom and pan
-            photoBitmaps[fullscreenIndex]?.let { bitmap ->
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Photo",
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = scale <= 1.01f,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer(
-                            scaleX = scale,
-                            scaleY = scale,
-                            translationX = offsetX,
-                            translationY = offsetY
+                        .fillMaxSize()
+                        .pointerInput(page) {
+                            detectTapGestures { showPhotoFullscreen = false }
+                        }
+                        .then(
+                            // Only the currently visible page needs pinch/pan
+                            // handling; neighbouring pages stay inert.
+                            if (page == pagerState.currentPage) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTransformGestures { _, pan, zoom, _ ->
+                                        val newScale = (scale * zoom).coerceIn(1f, 5f)
+                                        scale = newScale
+                                        if (newScale > 1.01f) {
+                                            // Zoomed in: pan the photo, clamped so it
+                                            // can never be dragged past its own edge.
+                                            val halfW = imageSize.width * (newScale - 1f) / 2f
+                                            val halfH = imageSize.height * (newScale - 1f) / 2f
+                                            offsetX = (offsetX + pan.x).coerceIn(-halfW, halfW)
+                                            offsetY = (offsetY + pan.y).coerceIn(-halfH, halfH)
+                                        } else {
+                                            // Back at (or below) fit-to-screen size:
+                                            // snap fully back so swipe-to-page can
+                                            // take over again with no leftover pan.
+                                            offsetX = 0f
+                                            offsetY = 0f
+                                        }
+                                    }
+                                }
+                            } else {
+                                Modifier
+                            }
                         ),
-                    contentScale = ContentScale.Fit
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    photoBitmaps[page]?.let { bitmap ->
+                        val isCurrent = page == pagerState.currentPage
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onSizeChanged { if (isCurrent) imageSize = it }
+                                .graphicsLayer(
+                                    scaleX = if (isCurrent) scale else 1f,
+                                    scaleY = if (isCurrent) scale else 1f,
+                                    translationX = if (isCurrent) offsetX else 0f,
+                                    translationY = if (isCurrent) offsetY else 0f
+                                ),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
             }
-            
-            // Navigation arrows
+
+            // Navigation arrows — still available as an explicit alternative
+            // to swiping, both animate the same pager the swipe gesture uses.
             if (photoBitmaps.size > 1) {
-                if (fullscreenIndex > 0) {
+                if (pagerState.currentPage > 0) {
                     IconButton(
-                        onClick = { fullscreenIndex-- },
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
+                        },
                         modifier = Modifier
                             .align(Alignment.CenterStart)
                             .padding(start = 16.dp)
@@ -162,10 +203,14 @@ fun BrewEntryDetailScreen(
                         )
                     }
                 }
-                
-                if (fullscreenIndex < photoBitmaps.size - 1) {
+
+                if (pagerState.currentPage < photoBitmaps.size - 1) {
                     IconButton(
-                        onClick = { fullscreenIndex++ },
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        },
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
                             .padding(end = 16.dp)
@@ -177,10 +222,10 @@ fun BrewEntryDetailScreen(
                         )
                     }
                 }
-                
+
                 // Position indicator
                 Text(
-                    text = "${fullscreenIndex + 1}/${photoBitmaps.size}",
+                    text = "${pagerState.currentPage + 1}/${photoBitmaps.size}",
                     color = Color.White,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
@@ -191,7 +236,7 @@ fun BrewEntryDetailScreen(
         }
         return
     }
-    
+
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
@@ -218,8 +263,8 @@ fun BrewEntryDetailScreen(
             }
         )
     }
-    
-    
+
+
     Scaffold(
         topBar = {
             BitoholicTopBar(
@@ -250,7 +295,7 @@ fun BrewEntryDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth(0.3f)
                                 .height(220.dp)
-                                .clickable { 
+                                .clickable {
                                     fullscreenIndex = index
                                     showPhotoFullscreen = true
                                 }
@@ -289,7 +334,7 @@ fun BrewEntryDetailScreen(
                     }
                 }
             }
-            
+
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
@@ -300,9 +345,9 @@ fun BrewEntryDetailScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 // Dates
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -319,9 +364,9 @@ fun BrewEntryDetailScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(20.dp))
-                
+
                 // Info grid
                 Card(
                     modifier = Modifier.fillMaxWidth()
@@ -334,7 +379,7 @@ fun BrewEntryDetailScreen(
                         DetailRow("Grinder", entry.grinderSetting.toString())
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                         DetailRow("Weight", "${entry.portionWeight}g")
-                        
+
                         if (!entry.description.isNullOrBlank()) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                             Text(
@@ -350,9 +395,9 @@ fun BrewEntryDetailScreen(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -371,7 +416,7 @@ fun BrewEntryDetailScreen(
                         Spacer(Modifier.width(4.dp))
                         Text("Edit")
                     }
-                    
+
                     // Delete button
                     Button(
                         onClick = { showDeleteConfirmation = true },
