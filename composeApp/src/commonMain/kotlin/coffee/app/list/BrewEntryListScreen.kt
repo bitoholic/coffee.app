@@ -223,7 +223,8 @@ fun BrewEntryListScreen(
             if (searchQuery.isNotEmpty() && entries.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
