@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -131,9 +132,13 @@ fun BrewEntryListScreen(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
-                                .weight(1f),
+                                .weight(0.6f)
+                                .height(32.dp),
                             singleLine = true,
-                            shape = RoundedCornerShape(20.dp)
+                            textStyle = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 12.sp
+                            ),
+                            shape = RoundedCornerShape(16.dp)
                         )
                         IconButton(
                             onClick = {
