@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -37,7 +38,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.first
@@ -84,7 +85,7 @@ fun BrewEntryListScreen(
     val currentSort by viewModel.currentSortOption.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
-    
+
     Scaffold(
         topBar = {
             BitoholicTopBar(
@@ -109,36 +110,88 @@ fun BrewEntryListScreen(
                 .padding(paddingValues)
         ) {
             // Sort + Search bar
-            Box {
-                if (isSearchExpanded) {
-                    // Search mode: sort button + text field + close, all in one row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Sort control + its dropdown menu live in their own Box, so the
+                // popup is anchored to the button itself rather than to the full
+                // width of the row. This keeps the button's own size independent
+                // of whatever else is in the row (e.g. the search field).
+                Box {
+                    TextButton(onClick = { isSortExpanded = true }) {
+                        Text(
+                            text = currentSort.displayName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = isSortExpanded,
+                        onDismissRequest = { isSortExpanded = false }
                     ) {
-                        TextButton(
-                            onClick = { isSortExpanded = true },
-                            modifier = Modifier
-                        ) {
-                            Text(
-                                text = currentSort.displayName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1
+                        SortOption.values().forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option.displayName) },
+                                onClick = {
+                                    viewModel.setSortOption(option)
+                                    isSortExpanded = false
+                                }
                             )
                         }
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = { viewModel.setSearchQuery(it) },
+                    }
+                }
+
+                if (isSearchExpanded) {
+                    // Search mode: this Row claims exactly the space left over
+                    // after the sort control above, so the field is always
+                    // confined between the sort control and the right edge and
+                    // can never grow over/under the sort control.
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Compact rounded search box built from BasicTextField.
+                        // Material3's TextField bakes in a much larger minimum
+                        // height/padding than fits here; forcing it down to
+                        // 32dp clips the actual text outside the visible box.
+                        // BasicTextField has no such built-in padding, so it
+                        // renders correctly at this size with an explicit,
+                        // guaranteed-visible text color.
+                        Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .widthIn(max = 120.dp)
-                                .height(32.dp),
-                            singleLine = true,
-                            shape = RoundedCornerShape(16.dp)
-                        )
+                                .weight(1f, fill = false)
+                                .widthIn(max = 140.dp)
+                                .height(32.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .padding(horizontal = 12.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            BasicTextField(
+                                value = searchQuery,
+                                onValueChange = { viewModel.setSearchQuery(it) },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                ),
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant)
+                            )
+                        }
                         IconButton(
                             onClick = {
                                 isSearchExpanded = false
@@ -152,54 +205,20 @@ fun BrewEntryListScreen(
                         }
                     }
                 } else {
-                    // Normal mode: sort button + search icon
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    // Normal mode: push the search icon to the far right,
+                    // matching the previous SpaceBetween layout.
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = { isSearchExpanded = true }
                     ) {
-                        TextButton(onClick = { isSortExpanded = true }) {
-                            Text(
-                                text = currentSort.displayName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Icon(
-                                Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(
-                            onClick = { isSearchExpanded = true }
-                        ) {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = "Search"
-                            )
-                        }
-                    }
-                }
-                
-                // Sort dropdown menu — anchored below the Row
-                DropdownMenu(
-                    expanded = isSortExpanded,
-                    onDismissRequest = { isSortExpanded = false }
-                ) {
-                    SortOption.values().forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(option.displayName) },
-                            onClick = {
-                                viewModel.setSortOption(option)
-                                isSortExpanded = false
-                            }
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search"
                         )
                     }
                 }
             }
-            
+
             // No results message when search returns empty
             if (searchQuery.isNotEmpty() && entries.isEmpty()) {
                 Box(
@@ -243,7 +262,7 @@ fun BrewEntryListScreen(
                                         firstPhotoPath = entryPhotos.firstOrNull()?.photoPath
                                     }
                                 }
-                                    
+
                                 // Load and display the photo if available
                                 firstPhotoPath?.let { path ->
                                     val photoManager = remember { PhotoManager(context) }
@@ -288,9 +307,9 @@ fun BrewEntryListScreen(
                                     }
                                 }
                             }
-                            
+
                             Spacer(modifier = Modifier.width(12.dp))
-                            
+
                             Column(modifier = Modifier.weight(1f)) {
                                 // Line 1: bold name left, origin/roast right
                                 Row(
