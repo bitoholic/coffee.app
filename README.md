@@ -1,23 +1,29 @@
 # BitoCoffee ☕
 
-A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, and sort your brew experiments — all branded with the bitoholic identity.
+A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, sort, search, and browse your brew experiments with multiple photos per entry — all branded with the bitoholic identity.
 
 ## Features
 
-![BitoCoffee](https://img.shields.io/badge/version-0.0.3-red?style=flat&color=C8102E)
+![BitoCoffee](https://img.shields.io/badge/version-0.0.4-red?style=flat&color=C8102E)
 ![CI](https://github.com/bitoholic/coffee.app/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 - **Add brew entries** — Record bean name, origin, roast type, grinder setting, portion weight, and description
 - **14 predefined origins** — Brazil, Colombia, Ethiopia, Kenya, and more seeded out of the box
 - **Custom origins** — Create and reuse your own origins with case-insensitive duplicate detection
 - **Sortable list** — 8 sort options with direction arrows (Date Added ↑↓, Bean Name ↑↓, Bean Origin ↑↓, Date Modified ↑↓)
+- **Real-time search** — As-you-type filtering by bean name, works alongside sorting
 - **Compact list layout** — Two-line rows with photo thumbnails, short dates, and right-aligned details
+- **Multi-photo gallery** — Up to 10 photos per entry with gallery multi-select and sequential camera capture
+- **Photo thumbnails** — Horizontal LazyRow on the form with individual X remove buttons
+- **Detail gallery** — Swipeable fullscreen viewer with pinch-to-zoom, pan clamping, and position indicator
+- **Camera capture** — Snap photos directly from the app, added one at a time to the gallery
+- **Photo auto-save** — Photos saved to local storage on entry creation, migrated from single-photo to multi-photo schema
+- **Compact search bar** — Rounded input field with 12sp font, inline between sort and close
+- **Smooth gallery navigation** — HorizontalPager-based swipe between photos with per-page zoom state
 - **Entry detail** — Clean card layout with full details, short dates, and action buttons
-- **Photo attachments** — Attach one photo per entry via gallery or camera, compressed automatically
-- **Photo display** — Thumbnail on list, full-width banner on detail, tap for fullscreen with pinch-to-zoom
-- **Camera capture** — Snap photos directly from the app with the camera option
 - **Edit & Delete** — Edit entries from the detail screen, delete with confirmation dialog
 - **Unsaved changes warning** — Warns before discarding edits on the add/edit form
+- **Keyboard-aware form** — Scrollable form with `imePadding` so the keyboard never obscures inputs
 - **Dark/Light/System theme** — Toggle via settings screen, persists across restarts
 - **Bitoholic branding** — Custom `#C8102E` colour scheme, logo TopBar with 0101/1010, coffee bean app icon
 - **App name: BitoCoffee** — Released under the bitoholic brand identity
@@ -28,10 +34,11 @@ A local-first mobile coffee brewing journal built with Compose Multiplatform and
 
 - **Kotlin Multiplatform** — Shared business logic across Android and iOS
 - **Compose Multiplatform** — Shared UI layer using Jetpack Compose
-- **Room KMP** — Local SQLite persistence with reactive flows
+- **Room KMP** — Local SQLite persistence with reactive flows, schema migrations
 - **Material 3** — Material Design theming with dark/light mode support
 - **PhotoManager** — Local photo storage with compression (1920px max, <500KB)
 - **FileProvider** — Android FileProvider for camera capture
+- **HorizontalPager** — Compose Foundation pager for smooth gallery swipe navigation
 - **Spec-driven development** — Formal specs and TDD checklists per feature
 
 ## Building
@@ -69,11 +76,11 @@ composeApp/src/
 ├── commonMain/kotlin/coffee/app/
 │   ├── core/           # Validation, date formatting, PhotoManager, BitoholicTopBar, Theme
 │   ├── data/
-│   │   ├── database/   # Room entities, DAOs, database definition
+│   │   ├── database/   # Room entities, DAOs, database definition, migrations
 │   │   └── repository/ # Repository wrappers
 │   ├── domain/         # Enums (RoastType, SortOption with display names)
-│   ├── form/           # Add/edit brew entry form with photo picker
-│   ├── list/           # Brew entry list, detail with zoom, compact row
+│   ├── form/           # Add/edit brew entry form with multi-photo picker
+│   ├── list/           # Brew entry list with search, detail with HorizontalPager gallery
 │   ├── settings/       # Theme toggle settings screen
 │   └── origin/         # Origin picker sheet and viewmodel
 ├── androidMain/
@@ -87,10 +94,10 @@ composeApp/src/
 
 Planned future enhancements:
 
-- **Search** — Filter brew entries by bean name, origin, or roast type
-- **Photo gallery** — Multiple photos per entry instead of one
+- **Brew list export / import** — Export entries as JSON/CSV, import from file
+- **Proper Android navigation** — Replace manual screen-state management with Compose Navigation or a navigation library
 - Additional brewing parameters and recipe support
-- Data export/backup
+- Data backup and sync
 
 ## License
 
