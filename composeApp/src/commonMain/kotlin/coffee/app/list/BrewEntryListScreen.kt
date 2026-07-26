@@ -133,6 +133,7 @@ fun BrewEntryListScreen(
                             value = searchQuery,
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
+                                .weight(1f)
                                 .widthIn(max = 120.dp)
                                 .height(32.dp),
                             singleLine = true,
