@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.flow.first
 import coffee.app.core.BitoholicTopBar
 import coffee.app.core.BrandRed
@@ -85,6 +86,7 @@ fun BrewEntryListScreen(
     val currentSort by viewModel.currentSortOption.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
         topBar = {
@@ -121,7 +123,17 @@ fun BrewEntryListScreen(
                 // width of the row. This keeps the button's own size independent
                 // of whatever else is in the row (e.g. the search field).
                 Box {
-                    TextButton(onClick = { isSortExpanded = true }) {
+                    TextButton(
+                        onClick = {
+                            // Dismiss the search field's focus/keyboard first. Opening
+                            // the menu while a field is still focused can trigger a
+                            // keyboard-dismiss + window-resize at the same moment the
+                            // popup computes its position, which is what was throwing
+                            // it into the corner instead of under the button.
+                            focusManager.clearFocus()
+                            isSortExpanded = true
+                        }
+                    ) {
                         Text(
                             text = currentSort.displayName,
                             style = MaterialTheme.typography.bodySmall,
