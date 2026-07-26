@@ -1,5 +1,6 @@
 package coffee.app.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -97,6 +98,15 @@ fun BrewEntryDetailScreen(
     // that only CONSUMES multi-touch (zoom) events — single-finger drags are left
     // unconsumed so the pager's built-in swipe gesture handles them smoothly.
     if (showPhotoFullscreen && photoBitmaps.isNotEmpty()) {
+        // Without this, the system back gesture/button falls through to the
+        // app's default back behavior. Since this screen isn't pushed onto a
+        // real navigation back stack, that default behavior is to exit the
+        // app entirely — this makes back (like tapping the photo) just close
+        // the viewer and return to the brew detail view instead.
+        BackHandler {
+            showPhotoFullscreen = false
+        }
+
         val pagerState = rememberPagerState(initialPage = fullscreenIndex) { photoBitmaps.size }
         val coroutineScope = rememberCoroutineScope()
 
