@@ -12,7 +12,6 @@ import coffee.app.data.database.CoffeeDatabase
 import coffee.app.data.repository.BrewEntryRepository
 import coffee.app.data.repository.OriginRepository
 import coffee.app.navigation.AppNavHost
-import coffee.app.navigation.Routes
 import coffee.app.list.BrewEntryListViewModel
 import coffee.app.form.BrewEntryFormViewModel
 import coffee.app.settings.SettingsViewModel
@@ -33,7 +32,7 @@ fun App() {
     }
     
     // Create SettingsViewModel in App.kt
-    val settingsViewModel = remember { SettingsViewModel(db.appPreferencesDao()) }
+    val settingsViewModel = remember { SettingsViewModel(db.appPreferencesDao(), db.brewEntryDao(), db.entryPhotoDao()) }
     val themeMode by settingsViewModel.themeMode.collectAsState()
 
     // Determine if dark mode should be applied
@@ -58,6 +57,7 @@ fun App() {
             val formViewModel = remember { BrewEntryFormViewModel(brewRepo, originRepo, entryPhotoDao) }
             
             AppNavHost(
+                brewEntryDao = db.brewEntryDao(),
                 entryPhotoDao = entryPhotoDao,
                 listViewModel = listViewModel,
                 formViewModel = formViewModel,
