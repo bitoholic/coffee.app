@@ -2,6 +2,9 @@ package coffee.app.settings
 
 import coffee.app.data.database.AppPreferencesDao
 import coffee.app.data.database.AppPreference
+import coffee.app.data.database.BrewEntryDao
+import coffee.app.data.database.EntryPhotoDao
+import coffee.app.data.repository.BrewEntryRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +16,8 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 class SettingsViewModel(
     private val prefsDao: AppPreferencesDao,
+    private val brewEntryDao: BrewEntryDao,
+    private val entryPhotoDao: EntryPhotoDao,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
