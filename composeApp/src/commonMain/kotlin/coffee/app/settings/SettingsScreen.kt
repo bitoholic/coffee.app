@@ -55,6 +55,47 @@ fun SettingsScreen(
                     }
                 }
             }
+            
+            // T007 - Backup/Restore buttons on Settings screen
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Backup & Restore",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            
+            // T008 - Include Photos toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Checkbox component for include photos (implementation placeholder)
+                Text(
+                    text = "Include Photos",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+
+            // Backup Button (placeholder for implementation)
+            Button(
+                onClick = { /* T009: Backup flow implementation */ },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Backup Data")
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Restore Button (placeholder for implementation)
+            Button(
+                onClick = { /* T010: Restore flow implementation */ },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Restore Data")
+            }
         }
     }
 }
