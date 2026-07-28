@@ -8,5 +8,6 @@ enum class SortOption(val displayName: String) {
     OriginAsc("Bean Origin ↑"),
     OriginDesc("Bean Origin ↓"),
     LastModifiedDateAsc("Date Modified ↑"),
-    LastModifiedDateDesc("Date Modified ↓")
+    LastModifiedDateDesc("Date Modified ↓"),
+    STARRED("Starred")
 }

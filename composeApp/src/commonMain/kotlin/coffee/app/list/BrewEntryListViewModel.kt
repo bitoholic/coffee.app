@@ -41,17 +41,34 @@ class BrewEntryListViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             _isLoading.value = true
-            brewEntryRepository.getAll(sort).collectLatest { entries ->
-                // Apply search filter after sorting
-                val filteredEntries = if (_searchQuery.value.isNotBlank()) {
-                    entries.filter { entry ->
-                        entry.beanName.contains(_searchQuery.value, true)
+            if (sort == SortOption.STARRED) {
+                // For STARRED sort, observe favourites directly instead of all entries
+                brewEntryRepository.observeFavourites().collectLatest { entries ->
+                    // Apply search filter after sorting
+                    val filteredEntries = if (_searchQuery.value.isNotBlank()) {
+                        entries.filter { entry ->
+                            entry.beanName.contains(_searchQuery.value, true)
+                        }
+                    } else {
+                        entries
                     }
-                } else {
-                    entries
+                    _entries.value = filteredEntries
+                    _isLoading.value = false
                 }
-                _entries.value = filteredEntries
-                _isLoading.value = false
+            } else {
+                // For all other sorts, use regular getAll
+                brewEntryRepository.getAll(sort).collectLatest { entries ->
+                    // Apply search filter after sorting
+                    val filteredEntries = if (_searchQuery.value.isNotBlank()) {
+                        entries.filter { entry ->
+                            entry.beanName.contains(_searchQuery.value, true)
+                        }
+                    } else {
+                        entries
+                    }
+                    _entries.value = filteredEntries
+                    _isLoading.value = false
+                }
             }
         }
     }
@@ -75,6 +92,16 @@ class BrewEntryListViewModel(
     fun deleteEntry(uuid: String) {
         viewModelScope.launch {
             brewEntryRepository.delete(uuid)
+        }
+    }
+
+    fun toggleFavourite(uuid: String) {
+        viewModelScope.launch {
+            val entry = brewEntryRepository.getById(uuid)
+            if (entry != null) {
+                val newState = if (entry.isFavourite == 0) 1 else 0
+                brewEntryRepository.updateFavourite(uuid, newState == 1)
+            }
         }
     }
 }
