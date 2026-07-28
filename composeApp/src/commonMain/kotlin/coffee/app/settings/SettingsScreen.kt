@@ -15,7 +15,6 @@ import androidx.core.content.FileProvider
 import coffee.app.backup.BackupContents
 import coffee.app.backup.BackupException
 import coffee.app.core.BitoholicTopBar
-import android.os.Environment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,7 +37,6 @@ fun SettingsScreen(
     var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
     var navigateAfterRestore by remember { mutableStateOf(false) }
     var navigateAfterBackup by remember { mutableStateOf(false) }
-    var showOverwriteDialog by remember { mutableStateOf(false) }
 
     // Navigate back after restore/backup
     LaunchedEffect(navigateAfterRestore) {
@@ -54,28 +52,6 @@ fun SettingsScreen(
             snackbarHostState.showSnackbar(msg)
             viewModel.clearMessage()
         }
-    }
-
-    // Overwrite confirmation dialog for save backup
-    if (showOverwriteDialog && pendingZipBytes != null) {
-        AlertDialog(
-            onDismissRequest = { showOverwriteDialog = false; pendingZipBytes = null },
-            title = { Text("File exists") },
-            text = { Text("backup_coffee.zip already exists in Downloads. Overwrite?") },
-            confirmButton = {
-                Button(onClick = {
-                    showOverwriteDialog = false
-                    val bytes = pendingZipBytes!!
-                    pendingZipBytes = null
-                    scope.launch { saveToDownloads(context, viewModel, bytes, onSuccess = { navigateAfterBackup = true }) }
-                }) { Text("Overwrite") }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = {
-                    showOverwriteDialog = false; pendingZipBytes = null; viewModel.setLoading(false)
-                }) { Text("Cancel") }
-            }
-        )
     }
 
     // Restore overwrite/merge dialog
@@ -135,20 +111,41 @@ fun SettingsScreen(
         }
     }
 
-    // Save backup to Downloads with overwrite check
+    // SAF save file picker for backup
+    val saveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri: Uri? ->
+        if (uri != null && pendingZipBytes != null) {
+            scope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri)?.use { os ->
+                            os.write(pendingZipBytes)
+                        }
+                    }
+                    viewModel.setMessage("Backup saved")
+                    navigateAfterBackup = true
+                } catch (e: Exception) {
+                    viewModel.setMessage("Save failed: ${e.message}")
+                } finally {
+                    pendingZipBytes = null
+                    viewModel.setLoading(false)
+                }
+            }
+        } else {
+            pendingZipBytes = null
+            viewModel.setLoading(false)
+        }
+    }
+
+    // Save backup — creates ZIP then opens file picker for location/name
     val saveBackup: () -> Unit = {
         scope.launch {
             try {
                 viewModel.setLoading(true)
                 val zipBytes = withContext(Dispatchers.IO) { viewModel.createBackup(includePhotos) }
-                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val file = File(dir, "backup_coffee.zip")
-                if (file.exists()) {
-                    pendingZipBytes = zipBytes
-                    showOverwriteDialog = true
-                } else {
-                    saveToDownloads(context, viewModel, zipBytes, onSuccess = { navigateAfterBackup = true })
-                }
+                pendingZipBytes = zipBytes
+                saveLauncher.launch("backup_coffee.zip")
             } catch (e: Exception) {
                 viewModel.setMessage("Backup failed: ${e.message}")
                 viewModel.setLoading(false)
@@ -314,28 +311,5 @@ private fun getThemeModeLabel(themeMode: ThemeMode): String {
         ThemeMode.SYSTEM -> "System"
         ThemeMode.LIGHT -> "Light"
         ThemeMode.DARK -> "Dark"
-    }
-}
-
-private suspend fun saveToDownloads(
-    context: android.content.Context,
-    viewModel: SettingsViewModel,
-    zipBytes: ByteArray,
-    onSuccess: () -> Unit
-) {
-    try {
-        viewModel.setLoading(true)
-        withContext(Dispatchers.IO) {
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            dir.mkdirs()
-            val file = File(dir, "backup_coffee.zip")
-            file.writeBytes(zipBytes)
-        }
-        viewModel.setMessage("Backup saved to Downloads")
-        onSuccess()
-    } catch (e: Exception) {
-        viewModel.setMessage("Backup failed: ${e.message}")
-    } finally {
-        viewModel.setLoading(false)
     }
 }
