@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
 
 @Composable
 fun SettingsScreen(
@@ -34,12 +35,16 @@ fun SettingsScreen(
     var includePhotos by remember { mutableStateOf(true) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
+    var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
 
-    // Snackbar effect
+    // Snackbar effect — after showing, navigate back on restore success
     LaunchedEffect(message) {
-        message?.let {
-            snackbarHostState.showSnackbar(it)
+        message?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
             viewModel.clearMessage()
+            if (msg.startsWith("Restore completed")) {
+                onNavigateBack()
+            }
         }
     }
 
@@ -96,6 +101,68 @@ fun SettingsScreen(
                 } finally {
                     viewModel.setLoading(false)
                 }
+            }
+        }
+    }
+
+    // SAF save file picker
+    val saveLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri: Uri? ->
+        if (uri != null && pendingZipBytes != null) {
+            scope.launch {
+                try {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri)?.use { os ->
+                            os.write(pendingZipBytes)
+                        }
+                    }
+                    viewModel.setMessage("Backup saved")
+                } catch (e: Exception) {
+                    viewModel.setMessage("Save failed: ${e.message}")
+                } finally {
+                    pendingZipBytes = null
+                }
+            }
+        }
+    }
+
+    // Shared backup creation logic
+    val createBackupAndShare: (saveOnly: Boolean) -> Unit = { saveOnly ->
+        scope.launch {
+            try {
+                viewModel.setLoading(true)
+                val zipBytes = withContext(Dispatchers.IO) {
+                    viewModel.createBackup(includePhotos)
+                }
+                val tempDir = File(context.cacheDir, "backups")
+                tempDir.mkdirs()
+                val tempFile = File(tempDir, "backup_coffee.zip")
+                tempFile.writeBytes(zipBytes)
+
+                if (saveOnly) {
+                    pendingZipBytes = zipBytes
+                    saveLauncher.launch("backup_coffee.zip")
+                } else {
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        tempFile
+                    )
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "application/zip"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                    viewModel.setMessage("Backup created")
+                }
+            } catch (e: BackupException) {
+                viewModel.setMessage("Backup failed: ${e.message}")
+            } catch (e: Exception) {
+                viewModel.setMessage("Backup failed: ${e.message}")
+            } finally {
+                if (!saveOnly) viewModel.setLoading(false)
             }
         }
     }
@@ -172,53 +239,27 @@ fun SettingsScreen(
                     )
                 }
 
-                // Backup button
+                // Share Backup button
                 Button(
-                    onClick = {
-                        scope.launch {
-                            try {
-                                viewModel.setLoading(true)
-                                val zipBytes = withContext(Dispatchers.IO) {
-                                    viewModel.createBackup(includePhotos)
-                                }
-                                // Save to temp file and share
-                                val tempDir = File(context.cacheDir, "backups")
-                                tempDir.mkdirs()
-                                val tempFile = File(tempDir, "backup_coffee.zip")
-                                tempFile.writeBytes(zipBytes)
-
-                                val uri = FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.fileprovider",
-                                    tempFile
-                                )
-                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/zip"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
-                                viewModel.setMessage("Backup created successfully")
-                            } catch (e: BackupException) {
-                                viewModel.setMessage("Backup failed: ${e.message}")
-                            } catch (e: Exception) {
-                                viewModel.setMessage("Backup failed: ${e.message}")
-                            } finally {
-                                viewModel.setLoading(false)
-                            }
-                        }
-                    },
+                    onClick = { createBackupAndShare(false) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
-                    Text("Backup Data")
+                    Text("Share Backup")
+                }
+
+                // Save Backup to file button
+                OutlinedButton(
+                    onClick = { createBackupAndShare(true) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Save Backup")
                 }
 
                 // Restore button
                 OutlinedButton(
-                    onClick = {
-                        restoreLauncher.launch(arrayOf("application/zip", "*/*"))
-                    },
+                    onClick = { restoreLauncher.launch(arrayOf("application/zip", "*/*")) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
