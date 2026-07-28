@@ -122,7 +122,7 @@ kover {
         verify {
             rule {
                 // Baseline: 5% — must never regress. Each PR must raise this.
-                minBound(5)
+                minBound(30)
             }
         }
     }
