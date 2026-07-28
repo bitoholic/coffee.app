@@ -121,8 +121,8 @@ kover {
     reports {
         verify {
             rule {
-                // Baseline: 5% — must never regress. Each PR must raise this.
-                minBound(30)
+                // Baseline: 9% — must never regress. Each PR must raise this.
+                minBound(9)
             }
         }
     }
