@@ -78,7 +78,7 @@ As a user, I want a way to delete a single entry from the detail screen using th
 ### Target (phased)
 - **Current baseline**: 5% (pre-v0.0.6)
 - **v0.0.6 minimum**: must not regress below baseline. Target: 25%+
-- **v0.0.7+**: incremental raises to reach 85% min / 90% target
+- **v0.0.7+**: incremental raises to reach 85% min / 95% target
 - **Enforcement**: CI `koverVerify` fails if coverage drops below current threshold
 - **Coverage measured across**: all `commonMain` source (not generated or test code)
 
