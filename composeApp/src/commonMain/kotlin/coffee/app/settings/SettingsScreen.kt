@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
 
 @Composable
 fun SettingsScreen(
@@ -36,15 +35,22 @@ fun SettingsScreen(
     var showRestoreDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
     var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var navigateAfterRestore by remember { mutableStateOf(false) }
 
-    // Snackbar effect — after showing, navigate back on restore success
+    // Navigate back after restore — uses its own state so snackbar timing
+    // doesn't interfere with the navigation callback.
+    LaunchedEffect(navigateAfterRestore) {
+        if (navigateAfterRestore) {
+            navigateAfterRestore = false
+            onNavigateBack()
+        }
+    }
+
+    // Snackbar for messages
     LaunchedEffect(message) {
         message?.let { msg ->
             snackbarHostState.showSnackbar(msg)
             viewModel.clearMessage()
-            if (msg.startsWith("Restore completed")) {
-                onNavigateBack()
-            }
         }
     }
 
@@ -60,7 +66,7 @@ fun SettingsScreen(
                     showRestoreDialog = false
                     pendingRestore = null
                     scope.launch {
-                        performRestore(viewModel, contents, RestoreMode.OVERWRITE, context.filesDir.absolutePath)
+                        performRestore(viewModel, contents, RestoreMode.OVERWRITE, context.filesDir.absolutePath, onNavigateBack = { navigateAfterRestore = true })
                     }
                 }) {
                     Text("Overwrite")
@@ -72,7 +78,7 @@ fun SettingsScreen(
                     showRestoreDialog = false
                     pendingRestore = null
                     scope.launch {
-                        performRestore(viewModel, contents, RestoreMode.MERGE, context.filesDir.absolutePath)
+                        performRestore(viewModel, contents, RestoreMode.MERGE, context.filesDir.absolutePath, onNavigateBack = { navigateAfterRestore = true })
                     }
                 }) {
                     Text("Merge")
@@ -105,7 +111,7 @@ fun SettingsScreen(
         }
     }
 
-    // SAF save file picker
+    // SAF save file picker — fires after user picked a location
     val saveLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip")
     ) { uri: Uri? ->
@@ -122,13 +128,18 @@ fun SettingsScreen(
                     viewModel.setMessage("Save failed: ${e.message}")
                 } finally {
                     pendingZipBytes = null
+                    viewModel.setLoading(false)
                 }
             }
+        } else {
+            // User cancelled — clean up loading state
+            pendingZipBytes = null
+            viewModel.setLoading(false)
         }
     }
 
-    // Shared backup creation logic
-    val createBackupAndShare: (saveOnly: Boolean) -> Unit = { saveOnly ->
+    // Share backup
+    val shareBackup: () -> Unit = {
         scope.launch {
             try {
                 viewModel.setLoading(true)
@@ -140,29 +151,45 @@ fun SettingsScreen(
                 val tempFile = File(tempDir, "backup_coffee.zip")
                 tempFile.writeBytes(zipBytes)
 
-                if (saveOnly) {
-                    pendingZipBytes = zipBytes
-                    saveLauncher.launch("backup_coffee.zip")
-                } else {
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        tempFile
-                    )
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "application/zip"
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
-                    viewModel.setMessage("Backup created")
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    tempFile
+                )
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = "application/zip"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
+                context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                viewModel.setMessage("Backup created")
             } catch (e: BackupException) {
                 viewModel.setMessage("Backup failed: ${e.message}")
             } catch (e: Exception) {
                 viewModel.setMessage("Backup failed: ${e.message}")
             } finally {
-                if (!saveOnly) viewModel.setLoading(false)
+                viewModel.setLoading(false)
+            }
+        }
+    }
+
+    // Save backup — creates ZIP, stores bytes, opens file picker
+    val saveBackup: () -> Unit = {
+        scope.launch {
+            try {
+                viewModel.setLoading(true)
+                val zipBytes = withContext(Dispatchers.IO) {
+                    viewModel.createBackup(includePhotos)
+                }
+                pendingZipBytes = zipBytes
+                // Loading stays true until saveLauncher finishes (or cancels)
+                saveLauncher.launch("backup_coffee.zip")
+            } catch (e: BackupException) {
+                viewModel.setMessage("Backup failed: ${e.message}")
+                viewModel.setLoading(false)
+            } catch (e: Exception) {
+                viewModel.setMessage("Backup failed: ${e.message}")
+                viewModel.setLoading(false)
             }
         }
     }
@@ -223,7 +250,6 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-                // Include Photos toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -239,25 +265,22 @@ fun SettingsScreen(
                     )
                 }
 
-                // Share Backup button
                 Button(
-                    onClick = { createBackupAndShare(false) },
+                    onClick = shareBackup,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
                     Text("Share Backup")
                 }
 
-                // Save Backup to file button
                 OutlinedButton(
-                    onClick = { createBackupAndShare(true) },
+                    onClick = saveBackup,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
                     Text("Save Backup")
                 }
 
-                // Restore button
                 OutlinedButton(
                     onClick = { restoreLauncher.launch(arrayOf("application/zip", "*/*")) },
                     modifier = Modifier.fillMaxWidth(),
@@ -267,7 +290,6 @@ fun SettingsScreen(
                 }
             }
 
-            // Loading indicator
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -284,7 +306,8 @@ private suspend fun performRestore(
     viewModel: SettingsViewModel,
     contents: BackupContents,
     mode: RestoreMode,
-    photoDir: String
+    photoDir: String,
+    onNavigateBack: () -> Unit
 ) {
     try {
         viewModel.setLoading(true)
@@ -292,6 +315,7 @@ private suspend fun performRestore(
             viewModel.restoreBackup(contents, mode, photoDir)
         }
         viewModel.setMessage("Restore completed (${contents.entries.size} entries)")
+        onNavigateBack()
     } catch (e: Exception) {
         viewModel.setMessage("Restore failed: ${e.message}")
     } finally {
