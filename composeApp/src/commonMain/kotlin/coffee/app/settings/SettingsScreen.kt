@@ -312,7 +312,32 @@ private suspend fun performRestore(
     try {
         viewModel.setLoading(true)
         withContext(Dispatchers.IO) {
+<<<<<<< Updated upstream
             viewModel.restoreBackup(contents, mode, photoDir)
+=======
+            val resolver = context.contentResolver
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Use MediaStore (API 29+)
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, "backup_coffee.zip")
+                    put(MediaStore.Downloads.MIME_TYPE, "application/zip")
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: throw BackupException("Could not create file in Downloads")
+                resolver.openOutputStream(uri)?.use { it.write(zipBytes) }
+                    ?: throw BackupException("Could not write file")
+                values.clear()
+                values.put(MediaStore.Downloads.IS_PENDING, 0)
+                resolver.update(uri, values, null, null)
+            } else {
+                // Fallback for older APIs: write directly to Downloads
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val file = File(dir, "backup_coffee.zip")
+                file.writeBytes(zipBytes)
+            }
+>>>>>>> Stashed changes
         }
         viewModel.setMessage("Restore completed (${contents.entries.size} entries)")
         onNavigateBack()
