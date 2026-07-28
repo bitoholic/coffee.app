@@ -118,12 +118,21 @@ fun SettingsScreen(
         if (uri != null && pendingZipBytes != null) {
             scope.launch {
                 try {
+                    var actualName = "backup_coffee.zip"
                     withContext(Dispatchers.IO) {
+                        // Query the display name from the returned URI
+                        val cursor = context.contentResolver.query(uri, null, null, null, null)
+                        cursor?.use {
+                            if (it.moveToFirst()) {
+                                val nameIdx = it.getColumnIndex(android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+                                if (nameIdx >= 0) actualName = it.getString(nameIdx)
+                            }
+                        }
                         context.contentResolver.openOutputStream(uri)?.use { os ->
                             os.write(pendingZipBytes)
                         }
                     }
-                    viewModel.setMessage("Backup saved")
+                    viewModel.setMessage("Backup saved as $actualName")
                     navigateAfterBackup = true
                 } catch (e: Exception) {
                     viewModel.setMessage("Save failed: ${e.message}")
@@ -256,7 +265,7 @@ fun SettingsScreen(
                     Text("Share Backup")
                 }
 
-                OutlinedButton(
+                Button(
                     onClick = saveBackup,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
