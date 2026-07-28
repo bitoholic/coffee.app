@@ -34,18 +34,13 @@ fun SettingsScreen(
     var includePhotos by remember { mutableStateOf(true) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
-    val dateFormat = remember { java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US) }
-    val backupFileName = "BitoCoffee-${dateFormat.format(java.util.Date())}.zip"
+    val backupFileName = "BitoCoffee-${System.currentTimeMillis()}.zip"
     var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
     var navigateAfterRestore by remember { mutableStateOf(false) }
-    var navigateAfterBackup by remember { mutableStateOf(false) }
 
-    // Navigate back after restore/backup
+    // Navigate back after restore
     LaunchedEffect(navigateAfterRestore) {
         if (navigateAfterRestore) { navigateAfterRestore = false; onNavigateBack() }
-    }
-    LaunchedEffect(navigateAfterBackup) {
-        if (navigateAfterBackup) { navigateAfterBackup = false; onNavigateBack() }
     }
 
     // Snackbar for messages
@@ -135,7 +130,6 @@ fun SettingsScreen(
                         }
                     }
                     viewModel.setMessage("Backup saved as $actualName")
-                    navigateAfterBackup = true
                 } catch (e: Exception) {
                     viewModel.setMessage("Save failed: ${e.message}")
                 } finally {
@@ -179,7 +173,6 @@ fun SettingsScreen(
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }, "Share backup"))
                 viewModel.setMessage("Backup created")
-                navigateAfterBackup = true
             } catch (e: Exception) {
                 viewModel.setMessage("Backup failed: ${e.message}")
             } finally {
