@@ -34,6 +34,8 @@ fun SettingsScreen(
     var includePhotos by remember { mutableStateOf(true) }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
+    val dateFormat = remember { java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US) }
+    val backupFileName = "BitoCoffee-${dateFormat.format(java.util.Date())}.zip"
     var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
     var navigateAfterRestore by remember { mutableStateOf(false) }
     var navigateAfterBackup by remember { mutableStateOf(false) }
@@ -118,7 +120,7 @@ fun SettingsScreen(
         if (uri != null && pendingZipBytes != null) {
             scope.launch {
                 try {
-                    var actualName = "backup_coffee.zip"
+                    var actualName = backupFileName
                     withContext(Dispatchers.IO) {
                         // Query the display name from the returned URI
                         val cursor = context.contentResolver.query(uri, null, null, null, null)
@@ -154,7 +156,7 @@ fun SettingsScreen(
                 viewModel.setLoading(true)
                 val zipBytes = withContext(Dispatchers.IO) { viewModel.createBackup(includePhotos) }
                 pendingZipBytes = zipBytes
-                saveLauncher.launch("backup_coffee.zip")
+                saveLauncher.launch(backupFileName)
             } catch (e: Exception) {
                 viewModel.setMessage("Backup failed: ${e.message}")
                 viewModel.setLoading(false)
@@ -169,7 +171,7 @@ fun SettingsScreen(
                 viewModel.setLoading(true)
                 val zipBytes = withContext(Dispatchers.IO) { viewModel.createBackup(includePhotos) }
                 val tempDir = File(context.cacheDir, "backups").also { it.mkdirs() }
-                val tempFile = File(tempDir, "backup_coffee.zip").also { it.writeBytes(zipBytes) }
+                val tempFile = File(tempDir, backupFileName).also { it.writeBytes(zipBytes) }
                 val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
                 context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                     type = "application/zip"
