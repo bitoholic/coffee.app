@@ -14,7 +14,7 @@ env:
 
 jobs:
   test:
-    name: JVM Tests
+    name: JVM Tests & Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -30,8 +30,15 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Run verification
-        run: ./gradlew check
+      - name: Run verification with coverage
+        run: ./gradlew check koverXmlReport koverVerify
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: composeApp/build/reports/kover/
 
       - name: Archive test results
         if: always()
@@ -39,3 +46,25 @@ jobs:
         with:
           name: test-results
           path: composeApp/build/reports/tests/
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const xml = fs.readFileSync('composeApp/build/reports/kover/report.xml', 'utf8');
+            const match = xml.match(/<counter type=\"LINE\" missed=\"(\d+)\" covered=\"(\d+)\"/);
+            if (match) {
+              const missed = parseInt(match[1]);
+              const covered = parseInt(match[2]);
+              const total = missed + covered;
+              const pct = (covered / total * 100).toFixed(1);
+              const status = pct >= 85 ? '✅' : '❌';
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## ${status} Coverage Report\n\n**${pct}%** line coverage (${covered}/${total} lines)\n\nThreshold: **85%** minimum`
+              });
+            }
