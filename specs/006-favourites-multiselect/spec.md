@@ -50,22 +50,18 @@ As a user, I want a way to delete a single entry from the detail screen using th
 
 **Independent Test**: Open entry detail → tap delete → confirmation dialog → confirm → navigated back to list, entry gone.
 
-## Open Questions *(to resolve during clarify)*
+## Resolved Decisions *(from clarify)*
 
-### Q1 — Star persistence
-Should starred state survive app restarts and backups?
-
-### Q2 — Bulk delete confirmation
-Simple "Delete N entries?" dialog, or also show which entries will be deleted?
-
-### Q3 — Multi-select exit
-Ways to exit selection mode: tap close X, tap back, or also auto-exit after deleting?
-
-### Q4 — Sort/filter UX
-"Starred" as a separate filter toggle (star icon button) vs added to the sort dropdown options?
-
-### Q5 — Star icon position
-Star icon in the detail screen top bar next to the entry name, or on the card itself in the list?
+| Question | Decision |
+|----------|----------|
+| Star persistence | Persist to Room DB, included in backup/restore |
+| Bulk delete confirmation | Simple "Delete N entries?" dialog with Cancel/Delete |
+| Multi-select exit | Close X + system back + auto-exit after delete |
+| Filter UX | In sort dropdown — "Starred" option alongside Date, Name, etc. |
+| Star icon position | Both — list card row AND detail screen top bar |
+| Favourites in backup | Add `isFavourite` field to BackupEntry |
+| Selection on navigate | Resets on any navigation (detail, form, etc.) |
+| Delete button placement | Persistent bar at bottom of screen in selection mode |
 
 ## Constraints
 
@@ -73,6 +69,9 @@ Star icon in the detail screen top bar next to the entry name, or on the card it
 - Favourite state must survive app restarts (persist to DB)
 - Multi-select must work with search active (filtered selection)
 - Sort options dropdown should not grow too long
+- Selection resets on any navigation (detail, form, etc.)
+- Delete button appears as a persistent bar at the bottom of the screen when in selection mode
+- Favourite state included in backup/restore (add `isFavourite` field to BackupEntry)
 
 ## Test Coverage Metrics
 
