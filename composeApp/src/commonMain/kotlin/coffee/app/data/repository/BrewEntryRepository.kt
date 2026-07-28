@@ -47,4 +47,8 @@ open class BrewEntryRepository(
             brewEntryDao.updateFavourite(uuid, isFavourite)
         }
     }
+
+    open suspend fun deleteByUuids(uuids: List<String>) = withContext(Dispatchers.IO) {
+        brewEntryDao.deleteByUuids(uuids)
+    }
 }
