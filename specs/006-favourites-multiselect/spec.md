@@ -76,9 +76,11 @@ Star icon in the detail screen top bar next to the entry name, or on the card it
 
 ## Test Coverage Metrics
 
-### Target
-- **Minimum line coverage**: 60%
-- **Target line coverage**: 75%
+### Target (phased)
+- **Current baseline**: 5% (pre-v0.0.6)
+- **v0.0.6 minimum**: must not regress below baseline. Target: 25%+
+- **v0.0.7+**: incremental raises to reach 85% min / 90% target
+- **Enforcement**: CI `koverVerify` fails if coverage drops below current threshold
 - **Coverage measured across**: all `commonMain` source (not generated or test code)
 
 ### Scope

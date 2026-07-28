@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.room)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -114,4 +115,15 @@ android {
 
 dependencies {
     ksp(libs.room.compiler)
+}
+
+kover {
+    reports {
+        verify {
+            rule {
+                // Baseline: 5% — must never regress. Each PR must raise this.
+                minBound(5)
+            }
+        }
+    }
 }
