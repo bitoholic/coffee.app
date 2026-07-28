@@ -22,7 +22,8 @@ object BackupEngine {
     fun createBackup(
         entries: List<BrewEntry>,
         entryPhotos: List<EntryPhoto>,
-        includePhotos: Boolean
+        includePhotos: Boolean,
+        schemaVersion: Int = 4
     ): ByteArray {
         if (entries.isEmpty()) {
             throw BackupException("No entries to back up")
@@ -60,7 +61,8 @@ object BackupEngine {
             version = BACKUP_VERSION,
             createdDate = timestamp,
             entryCount = entries.size,
-            hasPhotos = includePhotos
+            hasPhotos = includePhotos,
+            schemaVersion = schemaVersion
         )
 
         val baos = ByteArrayOutputStream()
@@ -124,7 +126,8 @@ object BackupEngine {
   "version": ${manifest.version},
   "createdDate": "${escapeJson(manifest.createdDate)}",
   "entryCount": ${manifest.entryCount},
-  "hasPhotos": ${manifest.hasPhotos}
+  "hasPhotos": ${manifest.hasPhotos},
+  "schemaVersion": ${manifest.schemaVersion}
 }"""
 
     private fun toJson(entries: List<BackupEntry>): String {
@@ -148,7 +151,8 @@ object BackupEngine {
         version = extractInt(json, "version"),
         createdDate = extractString(json, "createdDate"),
         entryCount = extractInt(json, "entryCount"),
-        hasPhotos = extractBoolean(json, "hasPhotos")
+        hasPhotos = extractBoolean(json, "hasPhotos"),
+        schemaVersion = try { extractInt(json, "schemaVersion") } catch (e: Exception) { 4 }
     )
 
     private fun parseBackupEntries(json: String): List<BackupEntry> {

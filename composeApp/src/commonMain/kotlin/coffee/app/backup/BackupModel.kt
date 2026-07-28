@@ -4,7 +4,8 @@ data class Manifest(
     val version: Int,
     val createdDate: String,
     val entryCount: Int,
-    val hasPhotos: Boolean
+    val hasPhotos: Boolean,
+    val schemaVersion: Int = 4
 )
 
 data class BackupEntry(
