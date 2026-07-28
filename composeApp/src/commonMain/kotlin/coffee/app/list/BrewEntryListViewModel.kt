@@ -35,6 +35,9 @@ class BrewEntryListViewModel(
     val isSelectionMode: Boolean
         get() = _selectedIds.value.isNotEmpty()
         
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
+    
     fun toggleSelection(uuid: String) {
         _selectedIds.value = if (_selectedIds.value.contains(uuid)) {
             _selectedIds.value - uuid
@@ -119,6 +122,17 @@ class BrewEntryListViewModel(
                 val newState = if (entry.isFavourite == 0) 1 else 0
                 brewEntryRepository.updateFavourite(uuid, newState == 1)
             }
+        }
+    }
+    
+    fun deleteSelected() {
+        val selectedIdsList = selectedIds.value.toList()
+        if (selectedIdsList.isNotEmpty()) {
+            viewModelScope.launch { 
+                brewEntryRepository.deleteByUuids(selectedIdsList) 
+                _snackbarMessage.value = "Deleted ${selectedIdsList.size} entries"
+            }
+            clearSelection()
         }
     }
 }
