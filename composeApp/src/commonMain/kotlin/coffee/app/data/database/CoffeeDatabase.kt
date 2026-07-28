@@ -10,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 
 @Database(
     entities = [BrewEntry::class, Origin::class, AppPreference::class, EntryPhoto::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class CoffeeDatabase : RoomDatabase() {
@@ -26,7 +26,7 @@ abstract class CoffeeDatabase : RoomDatabase() {
             return instance ?: synchronized(this) {
                 instance ?: builder
                     .setQueryCoroutineContext(Dispatchers.IO)
-                    .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     .also { db ->
                         instance = db
@@ -70,6 +70,12 @@ abstract class CoffeeDatabase : RoomDatabase() {
                 db.execSQL("CREATE TABLE brew_entries_new AS SELECT beanName, beanOrigin, roastType, grinderSetting, portionWeight, description, createdDate, lastModifiedDate, uuid FROM brew_entries")
                 db.execSQL("DROP TABLE brew_entries")
                 db.execSQL("ALTER TABLE brew_entries_new RENAME TO brew_entries")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE brew_entries ADD COLUMN isFavourite INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

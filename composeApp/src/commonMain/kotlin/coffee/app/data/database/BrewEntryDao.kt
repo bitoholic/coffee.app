@@ -16,6 +16,15 @@ interface BrewEntryDao {
     @Query("DELETE FROM brew_entries WHERE uuid = :uuid")
     suspend fun deleteByUuid(uuid: String)
 
+    @Query("DELETE FROM brew_entries WHERE uuid IN (:uuids)")
+    suspend fun deleteByUuids(uuids: List<String>)
+
+    @Query("SELECT * FROM brew_entries WHERE isFavourite = 1 ORDER BY createdDate DESC")
+    fun observeFavourites(): Flow<List<BrewEntry>>
+
+    @Query("UPDATE brew_entries SET isFavourite = :isFavourite WHERE uuid = :uuid")
+    suspend fun updateFavourite(uuid: String, isFavourite: Boolean)
+
     @Query("SELECT * FROM brew_entries ORDER BY createdDate DESC")
     fun observeAllCreatedDateDesc(): Flow<List<BrewEntry>>
 

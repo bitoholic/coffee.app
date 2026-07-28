@@ -53,6 +53,7 @@ object BackupEngine {
                 description = entry.description,
                 createdDate = entry.createdDate,
                 lastModifiedDate = entry.lastModifiedDate,
+                isFavourite = entry.isFavourite,
                 photoPaths = paths
             )
         }
@@ -144,6 +145,7 @@ object BackupEngine {
     "description": ${nullableString(e.description)},
     "createdDate": ${e.createdDate},
     "lastModifiedDate": ${e.lastModifiedDate},
+    "isFavourite": ${e.isFavourite},
     "photoPaths": [${e.photoPaths.joinToString(", ") { "\"${escapeJson(it)}\"" }}]
   }"""
 
@@ -181,6 +183,7 @@ object BackupEngine {
         description = extractNullableString(json, "description"),
         createdDate = extractLong(json, "createdDate"),
         lastModifiedDate = extractLong(json, "lastModifiedDate"),
+        isFavourite = try { extractInt(json, "isFavourite") } catch (e: Exception) { 0 },
         photoPaths = extractStringArray(json, "photoPaths")
     )
 

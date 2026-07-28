@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Star
+import coffee.app.core.BrandRed
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -82,7 +84,8 @@ fun BrewEntryDetailScreen(
     entryPhotoDao: EntryPhotoDao,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onToggleFavourite: () -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showPhotoFullscreen by remember { mutableStateOf(false) }
@@ -292,7 +295,29 @@ fun BrewEntryDetailScreen(
                 title = entry.beanName,
                 showBack = false,
                 onBackClick = onBack,
-                showSettings = false
+                showSettings = false,
+                actions = {
+                    // Star icon in top bar for detail screen
+                    IconButton(
+                        onClick = { 
+                            onToggleFavourite()
+                        }
+                    ) {
+                        if (entry.isFavourite == 1) {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = "Remove from favourites",
+                                tint = BrandRed
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = "Add to favourites",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->

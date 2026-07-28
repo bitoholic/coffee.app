@@ -18,6 +18,7 @@ data class BackupEntry(
     val description: String?,
     val createdDate: Long,
     val lastModifiedDate: Long,
+    val isFavourite: Int = 0,
     val photoPaths: List<String>
 )
 

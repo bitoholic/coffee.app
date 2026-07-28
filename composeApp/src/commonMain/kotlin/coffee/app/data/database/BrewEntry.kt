@@ -14,5 +14,6 @@ data class BrewEntry(
     val portionWeight: Double,
     val description: String? = null,
     val createdDate: Long,
-    val lastModifiedDate: Long
+    val lastModifiedDate: Long,
+    val isFavourite: Int = 0
 )
