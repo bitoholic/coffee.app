@@ -15,6 +15,7 @@ import androidx.core.content.FileProvider
 import coffee.app.backup.BackupContents
 import coffee.app.backup.BackupException
 import coffee.app.core.BitoholicTopBar
+import android.os.Environment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,14 +37,15 @@ fun SettingsScreen(
     var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
     var pendingZipBytes by remember { mutableStateOf<ByteArray?>(null) }
     var navigateAfterRestore by remember { mutableStateOf(false) }
+    var navigateAfterBackup by remember { mutableStateOf(false) }
+    var showOverwriteDialog by remember { mutableStateOf(false) }
 
-    // Navigate back after restore — uses its own state so snackbar timing
-    // doesn't interfere with the navigation callback.
+    // Navigate back after restore/backup
     LaunchedEffect(navigateAfterRestore) {
-        if (navigateAfterRestore) {
-            navigateAfterRestore = false
-            onNavigateBack()
-        }
+        if (navigateAfterRestore) { navigateAfterRestore = false; onNavigateBack() }
+    }
+    LaunchedEffect(navigateAfterBackup) {
+        if (navigateAfterBackup) { navigateAfterBackup = false; onNavigateBack() }
     }
 
     // Snackbar for messages
@@ -52,6 +54,28 @@ fun SettingsScreen(
             snackbarHostState.showSnackbar(msg)
             viewModel.clearMessage()
         }
+    }
+
+    // Overwrite confirmation dialog for save backup
+    if (showOverwriteDialog && pendingZipBytes != null) {
+        AlertDialog(
+            onDismissRequest = { showOverwriteDialog = false; pendingZipBytes = null },
+            title = { Text("File exists") },
+            text = { Text("backup_coffee.zip already exists in Downloads. Overwrite?") },
+            confirmButton = {
+                Button(onClick = {
+                    showOverwriteDialog = false
+                    val bytes = pendingZipBytes!!
+                    pendingZipBytes = null
+                    scope.launch { saveToDownloads(context, viewModel, bytes, onSuccess = { navigateAfterBackup = true }) }
+                }) { Text("Overwrite") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = {
+                    showOverwriteDialog = false; pendingZipBytes = null; viewModel.setLoading(false)
+                }) { Text("Cancel") }
+            }
+        )
     }
 
     // Restore overwrite/merge dialog
@@ -111,30 +135,24 @@ fun SettingsScreen(
         }
     }
 
-    // SAF save file picker — fires after user picked a location
-    val saveLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri: Uri? ->
-        if (uri != null && pendingZipBytes != null) {
-            scope.launch {
-                try {
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri)?.use { os ->
-                            os.write(pendingZipBytes)
-                        }
-                    }
-                    viewModel.setMessage("Backup saved")
-                } catch (e: Exception) {
-                    viewModel.setMessage("Save failed: ${e.message}")
-                } finally {
-                    pendingZipBytes = null
-                    viewModel.setLoading(false)
+    // Save backup to Downloads with overwrite check
+    val saveBackup: () -> Unit = {
+        scope.launch {
+            try {
+                viewModel.setLoading(true)
+                val zipBytes = withContext(Dispatchers.IO) { viewModel.createBackup(includePhotos) }
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val file = File(dir, "backup_coffee.zip")
+                if (file.exists()) {
+                    pendingZipBytes = zipBytes
+                    showOverwriteDialog = true
+                } else {
+                    saveToDownloads(context, viewModel, zipBytes, onSuccess = { navigateAfterBackup = true })
                 }
+            } catch (e: Exception) {
+                viewModel.setMessage("Backup failed: ${e.message}")
+                viewModel.setLoading(false)
             }
-        } else {
-            // User cancelled — clean up loading state
-            pendingZipBytes = null
-            viewModel.setLoading(false)
         }
     }
 
@@ -143,52 +161,20 @@ fun SettingsScreen(
         scope.launch {
             try {
                 viewModel.setLoading(true)
-                val zipBytes = withContext(Dispatchers.IO) {
-                    viewModel.createBackup(includePhotos)
-                }
-                val tempDir = File(context.cacheDir, "backups")
-                tempDir.mkdirs()
-                val tempFile = File(tempDir, "backup_coffee.zip")
-                tempFile.writeBytes(zipBytes)
-
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    tempFile
-                )
-                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                val zipBytes = withContext(Dispatchers.IO) { viewModel.createBackup(includePhotos) }
+                val tempDir = File(context.cacheDir, "backups").also { it.mkdirs() }
+                val tempFile = File(tempDir, "backup_coffee.zip").also { it.writeBytes(zipBytes) }
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", tempFile)
+                context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
                     type = "application/zip"
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                }, "Share backup"))
                 viewModel.setMessage("Backup created")
-            } catch (e: BackupException) {
-                viewModel.setMessage("Backup failed: ${e.message}")
+                navigateAfterBackup = true
             } catch (e: Exception) {
                 viewModel.setMessage("Backup failed: ${e.message}")
             } finally {
-                viewModel.setLoading(false)
-            }
-        }
-    }
-
-    // Save backup — creates ZIP, stores bytes, opens file picker
-    val saveBackup: () -> Unit = {
-        scope.launch {
-            try {
-                viewModel.setLoading(true)
-                val zipBytes = withContext(Dispatchers.IO) {
-                    viewModel.createBackup(includePhotos)
-                }
-                pendingZipBytes = zipBytes
-                // Loading stays true until saveLauncher finishes (or cancels)
-                saveLauncher.launch("backup_coffee.zip")
-            } catch (e: BackupException) {
-                viewModel.setMessage("Backup failed: ${e.message}")
-                viewModel.setLoading(false)
-            } catch (e: Exception) {
-                viewModel.setMessage("Backup failed: ${e.message}")
                 viewModel.setLoading(false)
             }
         }
@@ -328,5 +314,28 @@ private fun getThemeModeLabel(themeMode: ThemeMode): String {
         ThemeMode.SYSTEM -> "System"
         ThemeMode.LIGHT -> "Light"
         ThemeMode.DARK -> "Dark"
+    }
+}
+
+private suspend fun saveToDownloads(
+    context: android.content.Context,
+    viewModel: SettingsViewModel,
+    zipBytes: ByteArray,
+    onSuccess: () -> Unit
+) {
+    try {
+        viewModel.setLoading(true)
+        withContext(Dispatchers.IO) {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            dir.mkdirs()
+            val file = File(dir, "backup_coffee.zip")
+            file.writeBytes(zipBytes)
+        }
+        viewModel.setMessage("Backup saved to Downloads")
+        onSuccess()
+    } catch (e: Exception) {
+        viewModel.setMessage("Backup failed: ${e.message}")
+    } finally {
+        viewModel.setLoading(false)
     }
 }
