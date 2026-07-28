@@ -444,13 +444,14 @@ class FakeBrewEntryDao : BrewEntryDao {
     override suspend fun deleteByUuid(uuid: String) {}
     override fun observeAllCreatedDateDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllBeanNameAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
-    override fun observeAllBeanNameDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllOriginAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
+    override fun observeAllBeanNameDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllOriginDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllCreatedDate(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllLastModifiedDate(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllLastModifiedDateAsc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override suspend fun getById(uuid: String): BrewEntry? = null
+    override suspend fun getAll(): List<BrewEntry> = emptyList()
 }
 
 class FakeOriginDao : OriginDao {
@@ -467,4 +468,5 @@ class FakeEntryPhotoDao : EntryPhotoDao {
     override suspend fun deleteById(id: Int) {}
     override suspend fun deleteByEntryUuid(entryUuid: String) {}
     override suspend fun nextSortOrder(entryUuid: String): Int = 1
+    override suspend fun getAll(): List<EntryPhoto> = emptyList()
 }

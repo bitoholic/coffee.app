@@ -1,102 +1,260 @@
 package coffee.app.settings
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import coffee.app.backup.BackupContents
+import coffee.app.backup.BackupException
 import coffee.app.core.BitoholicTopBar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val isLoading by viewModel.isLoading.collectAsState()
+    val message by viewModel.message.collectAsState()
+
+    var includePhotos by remember { mutableStateOf(true) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var pendingRestore by remember { mutableStateOf<BackupContents?>(null) }
+
+    // Snackbar effect
+    LaunchedEffect(message) {
+        message?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearMessage()
+        }
+    }
+
+    // Restore overwrite/merge dialog
+    if (showRestoreDialog && pendingRestore != null) {
+        AlertDialog(
+            onDismissRequest = { showRestoreDialog = false; pendingRestore = null },
+            title = { Text("Restore Backup") },
+            text = { Text("How would you like to restore the backup data?") },
+            confirmButton = {
+                Button(onClick = {
+                    val contents = pendingRestore!!
+                    showRestoreDialog = false
+                    pendingRestore = null
+                    scope.launch {
+                        performRestore(viewModel, contents, RestoreMode.OVERWRITE, context.filesDir.absolutePath)
+                    }
+                }) {
+                    Text("Overwrite")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = {
+                    val contents = pendingRestore!!
+                    showRestoreDialog = false
+                    pendingRestore = null
+                    scope.launch {
+                        performRestore(viewModel, contents, RestoreMode.MERGE, context.filesDir.absolutePath)
+                    }
+                }) {
+                    Text("Merge")
+                }
+            }
+        )
+    }
+
+    // SAF file picker for restore
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    viewModel.setLoading(true)
+                    val bytes = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.readBytes()
+                            ?: throw BackupException("Could not read file")
+                    }
+                    val contents = viewModel.parseBackup(bytes)
+                    pendingRestore = contents
+                    showRestoreDialog = true
+                } catch (e: Exception) {
+                    viewModel.setMessage("Restore failed: ${e.message}")
+                } finally {
+                    viewModel.setLoading(false)
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             BitoholicTopBar(
                 title = "Settings",
-                showBack = true,
+                showBack = false,
                 onBackClick = onNavigateBack,
                 showSettings = false
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Theme",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            val themeMode by viewModel.themeMode.collectAsState()
-            val themeModes = listOf(ThemeMode.SYSTEM, ThemeMode.LIGHT, ThemeMode.DARK)
-
-            SingleChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                themeModes.forEachIndexed { index, mode ->
-                    SegmentedButton(
-                        selected = themeMode == mode,
-                        onClick = { viewModel.setThemeMode(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = themeModes.size
-                        )
-                    ) {
-                        Text(getThemeModeLabel(mode))
+                Text(
+                    text = "Theme",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                val themeMode by viewModel.themeMode.collectAsState()
+                val themeModes = listOf(ThemeMode.SYSTEM, ThemeMode.LIGHT, ThemeMode.DARK)
+
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    themeModes.forEachIndexed { index, mode ->
+                        SegmentedButton(
+                            selected = themeMode == mode,
+                            onClick = { viewModel.setThemeMode(mode) },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = themeModes.size
+                            )
+                        ) {
+                            Text(getThemeModeLabel(mode))
+                        }
                     }
                 }
-            }
-            
-            // T007 - Backup/Restore buttons on Settings screen
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                text = "Backup & Restore",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            
-            // T008 - Include Photos toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Checkbox component for include photos (implementation placeholder)
+
+                HorizontalDivider()
+
                 Text(
-                    text = "Include Photos",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 8.dp)
+                    text = "Backup & Restore",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
+
+                // Include Photos toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = includePhotos,
+                        onCheckedChange = { includePhotos = it }
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Include Photos",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                // Backup button
+                Button(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                viewModel.setLoading(true)
+                                val zipBytes = withContext(Dispatchers.IO) {
+                                    viewModel.createBackup(includePhotos)
+                                }
+                                // Save to temp file and share
+                                val tempDir = File(context.cacheDir, "backups")
+                                tempDir.mkdirs()
+                                val tempFile = File(tempDir, "backup_coffee.zip")
+                                tempFile.writeBytes(zipBytes)
+
+                                val uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    tempFile
+                                )
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/zip"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share backup"))
+                                viewModel.setMessage("Backup created successfully")
+                            } catch (e: BackupException) {
+                                viewModel.setMessage("Backup failed: ${e.message}")
+                            } catch (e: Exception) {
+                                viewModel.setMessage("Backup failed: ${e.message}")
+                            } finally {
+                                viewModel.setLoading(false)
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Backup Data")
+                }
+
+                // Restore button
+                OutlinedButton(
+                    onClick = {
+                        restoreLauncher.launch(arrayOf("application/zip", "*/*"))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Restore Data")
+                }
             }
 
-            // Backup Button (placeholder for implementation)
-            Button(
-                onClick = { /* T009: Backup flow implementation */ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Backup Data")
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Restore Button (placeholder for implementation)
-            Button(
-                onClick = { /* T010: Restore flow implementation */ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Restore Data")
+            // Loading indicator
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
+    }
+}
+
+private suspend fun performRestore(
+    viewModel: SettingsViewModel,
+    contents: BackupContents,
+    mode: RestoreMode,
+    photoDir: String
+) {
+    try {
+        viewModel.setLoading(true)
+        withContext(Dispatchers.IO) {
+            viewModel.restoreBackup(contents, mode, photoDir)
+        }
+        viewModel.setMessage("Restore completed (${contents.entries.size} entries)")
+    } catch (e: Exception) {
+        viewModel.setMessage("Restore failed: ${e.message}")
+    } finally {
+        viewModel.setLoading(false)
     }
 }
 
