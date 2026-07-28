@@ -70,7 +70,8 @@ fun AppNavHost(
                     entryPhotoDao = entryPhotoDao,
                     onBack = { navController.popBackStack() },
                     onEdit = { navController.navigate(Routes.form(entry.uuid)) },
-                    onDelete = { listViewModel.deleteEntry(entry.uuid); navController.popBackStack() }
+                    onDelete = { listViewModel.deleteEntry(entry.uuid); navController.popBackStack() },
+                    onToggleFavourite = { listViewModel.toggleFavourite(entry.uuid) }
                 )
             }
         }

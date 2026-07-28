@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Star
+import coffee.app.core.BrandRed
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -268,6 +270,28 @@ fun BrewEntryListScreen(
                                 .clickable { onNavigateToDetail(entry) }
                                 .padding(horizontal = 16.dp, vertical = 10.dp)
                         ) {
+                            // Star icon (leftmost, controls favourite status)
+                            IconButton(
+                                onClick = { viewModel.toggleFavourite(entry.uuid) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                if (entry.isFavourite == 1) {
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = "Remove from favourites",
+                                        tint = BrandRed
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = "Add to favourites",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
                             // Left: photo thumbnail or placeholder (48dp circle)
                             Box(
                                 modifier = Modifier

@@ -442,6 +442,9 @@ class FakeOriginRepository : OriginRepository {
 class FakeBrewEntryDao : BrewEntryDao {
     override suspend fun upsert(entry: BrewEntry) {}
     override suspend fun deleteByUuid(uuid: String) {}
+    override suspend fun deleteByUuids(uuids: List<String>) {}
+    override fun observeFavourites(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
+    override suspend fun updateFavourite(uuid: String, isFavourite: Boolean) {}
     override fun observeAllCreatedDateDesc(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllBeanNameAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())
     override fun observeAllOriginAZ(): Flow<List<BrewEntry>> = MutableStateFlow(emptyList())

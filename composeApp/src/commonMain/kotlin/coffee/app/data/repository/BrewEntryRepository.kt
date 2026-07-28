@@ -36,6 +36,15 @@ open class BrewEntryRepository(
             SortOption.OriginDesc -> brewEntryDao.observeAllOriginDesc()
             SortOption.LastModifiedDateAsc -> brewEntryDao.observeAllLastModifiedDateAsc()
             SortOption.LastModifiedDateDesc -> brewEntryDao.observeAllLastModifiedDate()
+            SortOption.STARRED -> brewEntryDao.observeFavourites()
+        }
+    }
+
+    open fun observeFavourites(): Flow<List<BrewEntry>> = brewEntryDao.observeFavourites()
+
+    open suspend fun updateFavourite(uuid: String, isFavourite: Boolean) {
+        withContext(Dispatchers.IO) {
+            brewEntryDao.updateFavourite(uuid, isFavourite)
         }
     }
 }
