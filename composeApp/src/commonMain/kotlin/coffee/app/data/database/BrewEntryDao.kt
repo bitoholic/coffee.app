@@ -42,4 +42,7 @@ interface BrewEntryDao {
 
     @Query("SELECT * FROM brew_entries WHERE uuid = :uuid")
     suspend fun getById(uuid: String): BrewEntry?
+
+    @Query("SELECT * FROM brew_entries ORDER BY createdDate DESC")
+    suspend fun getAll(): List<BrewEntry>
 }

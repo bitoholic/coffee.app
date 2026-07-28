@@ -25,4 +25,7 @@ interface EntryPhotoDao {
     
     @Query("SELECT COALESCE(MAX(sortOrder), 0) + 1 FROM entry_photos WHERE entryUuid = :entryUuid")
     suspend fun nextSortOrder(entryUuid: String): Int
+
+    @Query("SELECT * FROM entry_photos ORDER BY entryUuid, sortOrder ASC")
+    suspend fun getAll(): List<EntryPhoto>
 }
