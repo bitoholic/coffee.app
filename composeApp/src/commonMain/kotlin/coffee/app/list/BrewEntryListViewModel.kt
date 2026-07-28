@@ -30,6 +30,23 @@ class BrewEntryListViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
     
+    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
+    val isSelectionMode: Boolean
+        get() = _selectedIds.value.isNotEmpty()
+        
+    fun toggleSelection(uuid: String) {
+        _selectedIds.value = if (_selectedIds.value.contains(uuid)) {
+            _selectedIds.value - uuid
+        } else {
+            _selectedIds.value + uuid
+        }
+    }
+    
+    fun clearSelection() {
+        _selectedIds.value = emptySet()
+    }
+    
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var collectionJob: Job? = null
     
