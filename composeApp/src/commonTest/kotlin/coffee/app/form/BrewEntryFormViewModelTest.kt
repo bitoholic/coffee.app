@@ -367,6 +367,70 @@ class BrewEntryFormViewModelTest {
         assertNull(ValidationUtil.validateGrinderSetting(48))
     }
 
+    // --- Field Setters Tests ---
+    
+    @Test
+    fun `setBeanName updates state`() {
+        viewModel.onBeanNameChanged("Ethiopian Yirgacheffe")
+        val state = viewModel.state.value
+        assertEquals("Ethiopian Yirgacheffe", state.beanName)
+    }
+
+    @Test
+    fun `setBeanOrigin updates state`() {
+        viewModel.onBeanOriginChanged("Colombia")
+        val state = viewModel.state.value
+        assertEquals("Colombia", state.beanOrigin)
+    }
+
+    @Test
+    fun `setRoastType updates state`() {
+        viewModel.onRoastTypeChanged(RoastType.Medium)
+        val state = viewModel.state.value
+        assertEquals(RoastType.Medium, state.roastType)
+    }
+
+    @Test
+    fun `setGrinderSetting validates and updates`() {
+        viewModel.onGrinderSettingChanged("15")
+        val state = viewModel.state.value
+        assertEquals("15", state.grinderSetting)
+        
+        // Test invalid input - should keep previous value
+        viewModel.onGrinderSettingChanged("abc")
+        assertEquals("15", viewModel.state.value.grinderSetting)
+    }
+
+    @Test
+    fun `setPortionWeight validates and updates`() {
+        viewModel.onPortionWeightChanged("18")
+        val state = viewModel.state.value
+        assertEquals("18", state.portionWeight)
+        
+        // Test invalid input - should keep previous value
+        viewModel.onPortionWeightChanged("abc")
+        assertEquals("18", viewModel.state.value.portionWeight)
+    }
+
+    // --- Validation Tests ---
+    
+    @Test
+    fun `validation shows error for empty bean name`(){
+        viewModel.onBeanNameChanged("")
+        viewModel.save()
+        val state = viewModel.state.value
+        assertNotNull(state.validationErrors["beanName"])
+    }
+
+    @Test
+    fun `validation shows error for grinder setting out of range`(){
+        fillValidFields()
+        viewModel.onGrinderSettingChanged("0")  // Below minimum
+        viewModel.save()
+        val state = viewModel.state.value
+        assertNotNull(state.validationErrors["grinderSetting"])
+    }
+
     // --- Helper ---
 
     private fun fillValidFields() {
