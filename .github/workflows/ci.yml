@@ -46,25 +46,3 @@ jobs:
         with:
           name: test-results
           path: composeApp/build/reports/tests/
-
-      - name: Comment coverage on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const xml = fs.readFileSync('composeApp/build/reports/kover/report.xml', 'utf8');
-            const match = [...xml.matchAll(/counter.*?missed="(\d+)".*?covered="(\d+)"/g)];
-            if (match.length > 0) {
-              let missed = 0, covered = 0;
-              match.forEach(m => { missed += parseInt(m[1]); covered += parseInt(m[2]); });
-              const total = missed + covered;
-              const pct = (covered / total * 100).toFixed(1);
-              const status = pct >= 85 ? '✅' : '⚠️';
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `## ${status} Coverage Report\n\n**${pct}%** line coverage (${covered}/${total} lines)\n\nThreshold: **9%** (baseline — raising per PR)`
-              });
-            }
