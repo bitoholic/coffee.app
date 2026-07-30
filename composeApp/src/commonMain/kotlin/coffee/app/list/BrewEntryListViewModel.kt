@@ -15,7 +15,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class BrewEntryListViewModel(
-    private val brewEntryRepository: BrewEntryRepository
+    private val brewEntryRepository: BrewEntryRepository,
+    private val mainDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Main
 ) {
     
     private val _entries = MutableStateFlow<List<BrewEntry>>(emptyList())
@@ -58,7 +59,7 @@ class BrewEntryListViewModel(
         collectEntries(_currentSortOption.value)
     }
     
-    private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val viewModelScope = CoroutineScope(SupervisorJob() + mainDispatcher)
     private var collectionJob: Job? = null
     
     init {

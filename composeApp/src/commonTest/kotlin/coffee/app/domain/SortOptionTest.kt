@@ -12,13 +12,22 @@ class SortOptionTest {
             assertTrue(option.displayName != null, "Display name should not be null for $option")
         }
     }
-
+    
     @Test
-    fun `all standard sort options are present`() {
-        val names = SortOption.values().map { it.displayName }
-        assertTrue(names.contains("Date Added ↑"))
-        assertTrue(names.contains("Bean Name ↓"))
-        assertTrue(names.contains("Bean Origin ↑"))
-        assertTrue(names.contains("Date Modified ↓"))
+    fun `each option's display name matches expected value`() {
+        val expectedNames = mapOf(
+            SortOption.CreatedDateAsc to "Date Added ↑",
+            SortOption.CreatedDateDesc to "Date Added ↓",
+            SortOption.BeanNameAsc to "Bean Name ↑",
+            SortOption.BeanNameDesc to "Bean Name ↓",
+            SortOption.OriginAsc to "Bean Origin ↑",
+            SortOption.OriginDesc to "Bean Origin ↓",
+            SortOption.LastModifiedDateAsc to "Date Modified ↑",
+            SortOption.LastModifiedDateDesc to "Date Modified ↓"
+        )
+        
+        for ((option, expectedName) in expectedNames) {
+            assertEquals(expectedName, option.displayName)
+        }
     }
 }
