@@ -34,9 +34,12 @@ class BrewEntryListViewModel(
     val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
     val isSelectionMode: Boolean
         get() = _selectedIds.value.isNotEmpty()
-        
+    
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
+    
+    private val _isStarredFilterActive = MutableStateFlow(false)
+    val isStarredFilterActive: StateFlow<Boolean> = _isStarredFilterActive.asStateFlow()
     
     fun toggleSelection(uuid: String) {
         _selectedIds.value = if (_selectedIds.value.contains(uuid)) {
@@ -50,6 +53,11 @@ class BrewEntryListViewModel(
         _selectedIds.value = emptySet()
     }
     
+    fun toggleStarredFilter() {
+        _isStarredFilterActive.value = !_isStarredFilterActive.value
+        collectEntries(_currentSortOption.value)
+    }
+    
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var collectionJob: Job? = null
     
@@ -61,34 +69,21 @@ class BrewEntryListViewModel(
         collectionJob?.cancel()
         collectionJob = viewModelScope.launch {
             _isLoading.value = true
-            if (sort == SortOption.STARRED) {
-                // For STARRED sort, observe favourites directly instead of all entries
-                brewEntryRepository.observeFavourites().collectLatest { entries ->
-                    // Apply search filter after sorting
-                    val filteredEntries = if (_searchQuery.value.isNotBlank()) {
-                        entries.filter { entry ->
-                            entry.beanName.contains(_searchQuery.value, true)
-                        }
-                    } else {
-                        entries
-                    }
-                    _entries.value = filteredEntries
-                    _isLoading.value = false
-                }
+            val sourceFlow = if (_isStarredFilterActive.value) {
+                brewEntryRepository.observeFavourites()
             } else {
-                // For all other sorts, use regular getAll
-                brewEntryRepository.getAll(sort).collectLatest { entries ->
-                    // Apply search filter after sorting
-                    val filteredEntries = if (_searchQuery.value.isNotBlank()) {
-                        entries.filter { entry ->
-                            entry.beanName.contains(_searchQuery.value, true)
-                        }
-                    } else {
-                        entries
+                brewEntryRepository.getAll(sort)
+            }
+            sourceFlow.collectLatest { entries ->
+                val filteredEntries = if (_searchQuery.value.isNotBlank()) {
+                    entries.filter { entry ->
+                        entry.beanName.contains(_searchQuery.value, true)
                     }
-                    _entries.value = filteredEntries
-                    _isLoading.value = false
+                } else {
+                    entries
                 }
+                _entries.value = filteredEntries
+                _isLoading.value = false
             }
         }
     }
@@ -100,7 +95,6 @@ class BrewEntryListViewModel(
     
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
-        // Re-collect entries to apply filtering
         collectEntries(_currentSortOption.value)
     }
     

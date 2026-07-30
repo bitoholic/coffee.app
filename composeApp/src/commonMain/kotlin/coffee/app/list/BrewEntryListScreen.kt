@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -64,7 +65,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import coffee.app.core.BitoholicTopBar
 import coffee.app.core.BrandRed
 import coffee.app.core.DateFormatUtil
@@ -93,6 +93,7 @@ fun BrewEntryListScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
     val isSelectionMode = selectedIds.isNotEmpty()
+    val isStarredFilterActive by viewModel.isStarredFilterActive.collectAsState()
     val snackbarMessage by viewModel.snackbarMessage.collectAsState()
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
@@ -122,13 +123,12 @@ fun BrewEntryListScreen(
 
     // Snackbar
     LaunchedEffect(snackbarMessage) {
-        snackbarMessage?.let { /* snackbar shown via state reset in ViewModel */ }
+        snackbarMessage?.let { /* snackbar shown via state reset */ }
     }
 
     Scaffold(
         topBar = {
             if (isSelectionMode) {
-                // Selection mode top bar: count + close X
                 BitoholicTopBar(
                     title = "${selectedIds.size} selected",
                     showBack = false,
@@ -162,95 +162,125 @@ fun BrewEntryListScreen(
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Sort + Search bar (only when not in selection mode)
-                if (!isSelectionMode) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box {
-                            TextButton(
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    isSortExpanded = true
-                                }
-                            ) {
-                                Text(
-                                    text = currentSort.displayName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Icon(
-                                    Icons.Default.ArrowDropDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = isSortExpanded,
-                                onDismissRequest = { isSortExpanded = false }
-                            ) {
-                                SortOption.values().forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option.displayName) },
-                                        onClick = {
-                                            viewModel.setSortOption(option)
-                                            isSortExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        if (isSearchExpanded) {
-                            Row(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 8.dp),
-                                horizontalArrangement = Arrangement.End,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f, fill = false)
-                                        .widthIn(max = 140.dp)
-                                        .height(32.dp)
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        .border(1.dp, BrandRed, RoundedCornerShape(16.dp))
-                                        .padding(horizontal = 12.dp),
-                                    contentAlignment = Alignment.CenterStart
-                                ) {
-                                    BasicTextField(
-                                        value = searchQuery,
-                                        onValueChange = { viewModel.setSearchQuery(it) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        ),
-                                        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant)
-                                    )
-                                }
-                                IconButton(
+                // Sort + Search bar — always reserves space to prevent list shift
+                Box(modifier = Modifier.fillMaxWidth().height(if (isSelectionMode) 0.dp else 48.dp)) {
+                    if (!isSelectionMode) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box {
+                                TextButton(
                                     onClick = {
-                                        isSearchExpanded = false
-                                        viewModel.setSearchQuery("")
+                                        focusManager.clearFocus()
+                                        isSortExpanded = true
                                     }
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Close search")
+                                    Text(
+                                        text = currentSort.displayName,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Icon(
+                                        Icons.Default.ArrowDropDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = isSortExpanded,
+                                    onDismissRequest = { isSortExpanded = false }
+                                ) {
+                                    // Starred toggle as first item
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text("Starred")
+                                                Spacer(Modifier.width(8.dp))
+                                                Icon(
+                                                    Icons.Default.Star,
+                                                    contentDescription = null,
+                                                    tint = if (isStarredFilterActive) BrandRed else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            viewModel.toggleStarredFilter()
+                                            isSortExpanded = false
+                                        },
+                                        modifier = if (isStarredFilterActive) {
+                                            Modifier.background(BrandRed.copy(alpha = 0.1f))
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                                    // Divider
+                                    SortOption.values().forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option.displayName) },
+                                            onClick = {
+                                                viewModel.setSortOption(option)
+                                                isSortExpanded = false
+                                            }
+                                        )
+                                    }
                                 }
                             }
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
-                            IconButton(
-                                onClick = { isSearchExpanded = true }
-                            ) {
-                                Icon(Icons.Default.Search, contentDescription = "Search")
+
+                            if (isSearchExpanded) {
+                                Row(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(start = 8.dp),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f, fill = false)
+                                            .widthIn(max = 140.dp)
+                                            .height(32.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .border(1.dp, BrandRed, RoundedCornerShape(16.dp))
+                                            .padding(horizontal = 12.dp),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        BasicTextField(
+                                            value = searchQuery,
+                                            onValueChange = { viewModel.setSearchQuery(it) },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true,
+                                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            ),
+                                            cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurfaceVariant)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            isSearchExpanded = false
+                                            viewModel.setSearchQuery("")
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.Close, contentDescription = "Close search")
+                                    }
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                                IconButton(
+                                    onClick = {
+                                        focusManager.clearFocus()
+                                        isSearchExpanded = true
+                                    }
+                                ) {
+                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                }
                             }
                         }
                     }
@@ -320,70 +350,45 @@ fun BrewEntryListScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }
 
-                                // Photo thumbnail with favourite badge
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                ) {
-                                    var firstPhotoPath by remember { mutableStateOf<String?>(null) }
-                                    LaunchedEffect(entry.uuid) {
-                                        entryPhotoDao.getPhotosForEntry(entry.uuid).first().let { entryPhotos ->
-                                            firstPhotoPath = entryPhotos.firstOrNull()?.photoPath
-                                        }
-                                    }
-
-                                    firstPhotoPath?.let { path ->
-                                        val photoManager = remember { PhotoManager(context) }
-                                        val bitmap = photoManager.loadPhoto(path)
-                                        bitmap?.let {
-                                            Image(
-                                                bitmap = it.asImageBitmap(),
-                                                contentDescription = "Entry photo thumbnail",
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentScale = ContentScale.Crop
-                                            )
-                                        } ?: run {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    Icons.Default.Add,
-                                                    contentDescription = "No photo",
-                                                    tint = BrandRed,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
+                                // Photo thumbnail with favourite badge (star outside clip)
+                                Box(modifier = Modifier.size(48.dp)) {
+                                    // The photo circle (clipped)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                    ) {
+                                        var firstPhotoPath by remember { mutableStateOf<String?>(null) }
+                                        LaunchedEffect(entry.uuid) {
+                                            entryPhotoDao.getPhotosForEntry(entry.uuid).first().let { entryPhotos ->
+                                                firstPhotoPath = entryPhotos.firstOrNull()?.photoPath
                                             }
                                         }
-                                    } ?: run {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Add,
-                                                contentDescription = "No photo",
-                                                tint = BrandRed,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
+                                        // Photo content (same as before)
+                                        firstPhotoPath?.let { path ->
+                                            val photoManager = remember { PhotoManager(context) }
+                                            val bitmap = photoManager.loadPhoto(path)
+                                            bitmap?.let {
+                                                Image(
+                                                    bitmap = it.asImageBitmap(),
+                                                    contentDescription = "Entry photo thumbnail",
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            } ?: run { placeholderIcon() }
+                                        } ?: run { placeholderIcon() }
                                     }
 
-                                    // Favourite badge: small star at top-right of photo
+                                    // Star badge — positioned outside the circle, not clipped
                                     if (entry.isFavourite == 1) {
                                         Icon(
                                             Icons.Default.Star,
                                             contentDescription = "Favourite",
                                             tint = BrandRed,
                                             modifier = Modifier
-                                                .size(16.dp)
+                                                .size(18.dp)
                                                 .align(Alignment.TopEnd)
-                                                .zIndex(1f)
+                                                .offset(x = 4.dp, y = (-4).dp)
                                         )
                                     }
                                 }
@@ -469,5 +474,22 @@ fun BrewEntryListScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun placeholderIcon() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = "No photo",
+            tint = BrandRed,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
