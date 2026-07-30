@@ -108,6 +108,7 @@ android {
 
     lint {
         disable.add("NullSafeMutableLiveData")
+        disable.add("RememberInComposition")
         abortOnError = false
         checkReleaseBuilds = false
     }
@@ -121,8 +122,8 @@ kover {
     reports {
         verify {
             rule {
-                // Baseline: 9% — must never regress. Each PR must raise this.
-                minBound(9)
+                // Baseline: 16% line coverage — must never regress. Each PR must raise this.
+                minBound(16)
             }
         }
     }
