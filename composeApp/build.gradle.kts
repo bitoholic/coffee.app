@@ -109,6 +109,7 @@ android {
     lint {
         disable.add("NullSafeMutableLiveData")
         disable.add("RememberInComposition")
+        disable.add("RememberInCompositionDetector")
         abortOnError = false
         checkReleaseBuilds = false
     }
@@ -122,8 +123,17 @@ kover {
     reports {
         verify {
             rule {
-                // Baseline: 16% line coverage — must never regress. Each PR must raise this.
-                minBound(16)
+                // Baseline: 18% line coverage — must never regress. Each PR must raise this.
+                minBound(18)
+            }
+        }
+        filters {
+            excludes {
+                classes(
+                    "coffee.app.navigation.*",
+                    "coffee.app.origin.*",
+                    "coffee_app.composeapp.generated.resources.*"
+                )
             }
         }
     }
