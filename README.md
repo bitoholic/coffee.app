@@ -1,16 +1,19 @@
 # BitoCoffee ☕
 
-A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, sort, search, browse, and back up your brew experiments with multiple photos per entry — all branded with the bitoholic identity.
+A local-first mobile coffee brewing journal built with Compose Multiplatform and Room KMP. Record, view, edit, sort, search, browse, back up, and bulk-delete your brew experiments with multiple photos per entry, favourites, and starred filters — all branded with the bitoholic identity.
 
 ## Features
 
-![BitoCoffee](https://img.shields.io/badge/version-0.0.5-red?style=flat&color=C8102E)
+![BitoCoffee](https://img.shields.io/badge/version-0.0.6-red?style=flat&color=C8102E)
 ![CI](https://github.com/bitoholic/coffee.app/actions/workflows/ci.yml/badge.svg?branch=develop)
 
 - **Add brew entries** — Record bean name, origin, roast type, grinder setting, portion weight, and description
 - **14 predefined origins** — Brazil, Colombia, Ethiopia, Kenya, and more seeded out of the box
 - **Custom origins** — Create and reuse your own origins with case-insensitive duplicate detection
 - **Sortable list** — 8 sort options with direction arrows (Date Added ↑↓, Bean Name ↑↓, Bean Origin ↑↓, Date Modified ↑↓)
+- **Starred toggle filter** — Show only favourited entries, works alongside any sort option
+- **Favourites ⭐** — Star entries from the detail screen, persisted in DB and backup, subtle badge on list photo thumbnails
+- **Multi-Select & Bulk Delete** — Long-press to enter selection mode, checkboxes, highlights, bottom bar with count + delete, confirmation dialog
 - **Real-time search** — As-you-type filtering by bean name, works alongside sorting, brand red border in dark mode
 - **Compact list layout** — Two-line rows with photo thumbnails, short dates, and right-aligned details
 - **Multi-photo gallery** — Up to 10 photos per entry with gallery multi-select and sequential camera capture
@@ -29,6 +32,7 @@ A local-first mobile coffee brewing journal built with Compose Multiplatform and
 - **Compose Navigation** — Proper back-stack with type-safe routes via `NavHost`, replaces manual screen-state management
 - **Schema metadata** — Backups include database schema version for forward compatibility
 - **Android Auto Backup disabled** — Fresh installs start clean, no stale cloud data
+- **Kover coverage enforcement** — CI blocks PRs below coverage threshold, HTML + XML reports on each run
 - **Bitoholic branding** — Custom `#C8102E` colour scheme, logo TopBar with 0101/1010, coffee bean app icon
 - **App name: BitoCoffee** — Released under the bitoholic brand identity
 - **Persistence** — All data stored locally via Room (SQLite), survives app restarts
@@ -46,6 +50,7 @@ A local-first mobile coffee brewing journal built with Compose Multiplatform and
 - **Compose Navigation** — Type-safe navigation with `NavHost` and kotlinx-serialization args
 - **ZIP + JSON** — Backup format using `java.util.zip` and manual JSON serialization (no external deps)
 - **SAF** — Storage Access Framework for file picker and document creation
+- **Kover** — Kotlin code coverage with CI verification and HTML reports
 - **Spec-driven development** — Formal specs, plans, and task checklists per feature
 
 ## Building
@@ -70,10 +75,17 @@ adb install -r composeApp/build/outputs/apk/release/composeApp-release.apk
 
 Requires JDK 17+ and Android SDK with build-tools 34 and platform android-35.
 
-## Running Tests
+## Running Tests & Coverage
 
 ```bash
+# Run all tests
 ./gradlew check
+
+# Run tests with coverage report (HTML + XML)
+./gradlew check koverXmlReport koverHtmlReport
+
+# View HTML report
+open composeApp/build/reports/kover/html/index.html
 ```
 
 ## Project Structure
@@ -88,7 +100,7 @@ composeApp/src/
 │   │   └── repository/ # Repository wrappers
 │   ├── domain/         # Enums (RoastType, SortOption with display names)
 │   ├── form/           # Add/edit brew entry form with multi-photo picker
-│   ├── list/           # Brew entry list with search, detail with HorizontalPager gallery
+│   ├── list/           # Brew entry list with search, favourites, multi-select, detail gallery
 │   ├── navigation/     # Routes, NavHost, screen graph with type-safe arguments
 │   ├── settings/       # Theme toggle, backup/restore buttons with SAF pickers
 │   └── origin/         # Origin picker sheet and viewmodel
@@ -103,7 +115,7 @@ composeApp/src/
 
 Planned future enhancements:
 
-- **Multi-select & batch delete** — Select multiple entries in the list and delete them in one action
+- **Test coverage** — Fix test coverage gap across all features (ViewModel, DAO, domain, backup, navigation)
 - Additional brewing parameters and recipe support
 - Sorting by rating or custom fields
 
