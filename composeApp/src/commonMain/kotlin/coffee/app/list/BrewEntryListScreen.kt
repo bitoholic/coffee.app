@@ -162,8 +162,8 @@ fun BrewEntryListScreen(
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Sort + Search bar — always reserves space to prevent list shift
-                Box(modifier = Modifier.fillMaxWidth().height(if (isSelectionMode) 0.dp else 48.dp)) {
+                // Sort + Search bar — always reserves 48dp to prevent list shift
+                Box(modifier = Modifier.fillMaxWidth().height(48.dp)) {
                     if (!isSelectionMode) {
                         Row(
                             modifier = Modifier

@@ -1,7 +1,6 @@
 package coffee.app.domain
 
 enum class SortOption(val displayName: String) {
-    STARRED("Starred"),
     CreatedDateAsc("Date Added ↑"),
     CreatedDateDesc("Date Added ↓"),
     BeanNameAsc("Bean Name ↑"),
