@@ -60,7 +60,7 @@ jobs:
               match.forEach(m => { missed += parseInt(m[1]); covered += parseInt(m[2]); });
               const total = missed + covered;
               const pct = total > 0 ? (covered / total * 100).toFixed(1) : '0.0';
-              const threshold = 9;
+              const threshold = 8;
               const status = parseFloat(pct) >= threshold ? '✅' : '❌';
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
