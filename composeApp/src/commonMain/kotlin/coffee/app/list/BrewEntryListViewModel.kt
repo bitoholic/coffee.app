@@ -75,16 +75,34 @@ class BrewEntryListViewModel(
                 brewEntryRepository.getAll(sort)
             }
             sourceFlow.collectLatest { entries ->
+                var sorted = if (_isStarredFilterActive.value) {
+                    sortEntries(entries, sort)
+                } else {
+                    entries
+                }
                 val filteredEntries = if (_searchQuery.value.isNotBlank()) {
-                    entries.filter { entry ->
+                    sorted.filter { entry ->
                         entry.beanName.contains(_searchQuery.value, true)
                     }
                 } else {
-                    entries
+                    sorted
                 }
                 _entries.value = filteredEntries
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun sortEntries(entries: List<BrewEntry>, sort: SortOption): List<BrewEntry> {
+        return when (sort) {
+            SortOption.CreatedDateDesc -> entries.sortedByDescending { it.createdDate }
+            SortOption.CreatedDateAsc -> entries.sortedBy { it.createdDate }
+            SortOption.BeanNameAsc -> entries.sortedBy { it.beanName.lowercase() }
+            SortOption.BeanNameDesc -> entries.sortedByDescending { it.beanName.lowercase() }
+            SortOption.OriginAsc -> entries.sortedBy { it.beanOrigin?.lowercase() ?: "" }
+            SortOption.OriginDesc -> entries.sortedByDescending { it.beanOrigin?.lowercase() ?: "" }
+            SortOption.LastModifiedDateAsc -> entries.sortedBy { it.lastModifiedDate }
+            SortOption.LastModifiedDateDesc -> entries.sortedByDescending { it.lastModifiedDate }
         }
     }
     
