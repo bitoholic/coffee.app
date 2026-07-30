@@ -9,6 +9,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  issues: write
+
 env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true
 
@@ -31,9 +37,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run verification with coverage
-        run: ./gradlew check koverXmlReport koverVerify
+        run: ./gradlew check koverXmlReport koverHtmlReport koverVerify
 
-      - name: Upload coverage report
+      - name: Upload coverage report (HTML + XML)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -46,3 +52,26 @@ jobs:
         with:
           name: test-results
           path: composeApp/build/reports/tests/
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const xml = fs.readFileSync('composeApp/build/reports/kover/report.xml', 'utf8');
+            const match = [...xml.matchAll(/counter.*?missed="(\d+)".*?covered="(\d+)"/g)];
+            if (match.length > 0) {
+              let missed = 0, covered = 0;
+              match.forEach(m => { missed += parseInt(m[1]); covered += parseInt(m[2]); });
+              const total = missed + covered;
+              const pct = (covered / total * 100).toFixed(1);
+              const threshold = 9;
+              const status = pct >= threshold ? '✅' : '❌';
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## ${status} Coverage Report\n\n**${pct}%** line coverage (${covered}/${total} lines)\n\nThreshold: **${threshold}%** (koverVerify fails below this)`
+              });
+            }
