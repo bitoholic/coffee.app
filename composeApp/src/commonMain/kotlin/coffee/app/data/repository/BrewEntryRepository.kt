@@ -36,7 +36,6 @@ open class BrewEntryRepository(
             SortOption.OriginDesc -> brewEntryDao.observeAllOriginDesc()
             SortOption.LastModifiedDateAsc -> brewEntryDao.observeAllLastModifiedDateAsc()
             SortOption.LastModifiedDateDesc -> brewEntryDao.observeAllLastModifiedDate()
-            SortOption.STARRED -> brewEntryDao.observeFavourites()
         }
     }
 

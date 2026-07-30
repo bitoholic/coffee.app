@@ -7,21 +7,18 @@ import kotlin.test.assertTrue
 class SortOptionTest {
     
     @Test
-    fun `STARRED option exists in SortOption enum`() {
-        val sortOptions = SortOption.values()
-        val hasStarred = sortOptions.any { it == SortOption.STARRED }
-        assertTrue(hasStarred, "SortOption.STARRED should exist in the enum")
-    }
-    
-    @Test
-    fun `STARRED has correct display name`() {
-        assertEquals("Starred", SortOption.STARRED.displayName)
-    }
-    
-    @Test
     fun `all SortOptions have non-null display names`() {
         for (option in SortOption.values()) {
             assertTrue(option.displayName != null, "Display name should not be null for $option")
         }
+    }
+
+    @Test
+    fun `all standard sort options are present`() {
+        val names = SortOption.values().map { it.displayName }
+        assertTrue(names.contains("Date Added ↑"))
+        assertTrue(names.contains("Bean Name ↓"))
+        assertTrue(names.contains("Bean Origin ↑"))
+        assertTrue(names.contains("Date Modified ↓"))
     }
 }
