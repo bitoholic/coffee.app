@@ -32,7 +32,7 @@ jobs:
 
       - name: Run tests with coverage
         # Note: uses `test` not `check` — lint crashes with IncompatibleClassChangeError
-        run: ./gradlew test koverXmlReport koverHtmlReport koverVerify
+        run: ./gradlew check koverXmlReport koverHtmlReport koverVerify
 
       - name: Upload coverage report (HTML + XML)
         if: always()
